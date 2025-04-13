@@ -1,5 +1,6 @@
 module SelectedInversion
 
-# Write your package code here.
+include("supernodal_matrix.jl")
+include("selinv.jl")
 
 end
