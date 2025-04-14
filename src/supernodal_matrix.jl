@@ -96,6 +96,9 @@ function get_Sj(S::SupernodalMatrix, sup_idx::Int)
 end
 
 function partition_Sj(S::SupernodalMatrix, Sj)
+    if length(Sj) == 0
+        return Vector{Int64}[]
+    end
     blocks = Vector{Vector{Int64}}(undef, 0)
     cur_block = nothing
     cur_sup = nothing
