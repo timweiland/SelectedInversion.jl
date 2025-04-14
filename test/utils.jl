@@ -8,7 +8,13 @@ function check_supernodal_chunks_equal_dense(
     for sup_idx in 1:S.n_super
         chunk = get_chunk(S, sup_idx)
         chunk_row_idcs, chunk_col_idcs = get_row_col_idcs(S, sup_idx)
-        if !(A[chunk_row_idcs, chunk_col_idcs] ≈ chunk)
+
+        gt = A[chunk_row_idcs, chunk_col_idcs]
+        if S.transposed_chunks
+            gt = gt'
+        end
+
+        if !(gt ≈ chunk)
             return false
         end
     end
