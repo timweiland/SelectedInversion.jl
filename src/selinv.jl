@@ -30,12 +30,12 @@ function compute_Y(Y_buf, Z, off_diag_chunk, Sj_blocks, indmap)
         Z_rows = get_rows(Z, K)
         Z_chunk_row_idx = 1
 
-        R₁ = view(indmap, block_j)
+        R₁ = indmap[block_j][1]:indmap[block_j][end]
 
-        L_Ij_j = @view(off_diag_chunk[R₁, 1:end])
+        L_Ij_j_T = @view(off_diag_chunk[:, R₁])
 
-        Y_R₁ = @view(Y_buf[R₁, 1:end])
-        mul!(Y_R₁, Z_jj, L_Ij_j, 1, 1)
+        Y_R₁ = @view(Y_buf[:, R₁])
+        mul!(Y_R₁, L_Ij_j_T, Z_jj, 1, 1)
         @inbounds for i in (j+1):n_j
             block_i = Sj_blocks[i]
 
@@ -48,41 +48,40 @@ function compute_Y(Y_buf, Z, off_diag_chunk, Sj_blocks, indmap)
             end
             Z_chunk_rng = range(start=Z_chunk_row_idx, length=length(block_i))
 
-            R₂ = view(indmap, block_i)
+            R₂ = indmap[block_i][1]:indmap[block_i][end]
 
-            Z_ij = @view(Z_chunk_j[Z_chunk_rng, Z_jj_rng])
-            L_Ii_j = @view(off_diag_chunk[R₂, 1:end])
+            Z_ij_T = @view(Z_chunk_j[Z_jj_rng, Z_chunk_rng])
+            L_Ii_j_T = @view(off_diag_chunk[:, R₂])
 
-            Y_R₂ = @view(Y_buf[R₂, 1:end])
-            mul!(Y_R₂, Z_ij, L_Ij_j, 1, 1)
-            mul!(Y_R₁, Z_ij', L_Ii_j, 1, 1)
+            Y_R₂ = @view(Y_buf[:, R₂])
+
+            mul!(Y_R₂, L_Ij_j_T, Z_ij_T, 1, 1)
+            mul!(Y_R₁, L_Ii_j_T, Z_ij_T', 1, 1)
         end
     end
     fill!(indmap, 0)
 end
 
 function selinv(F::SparseArrays.CHOLMOD.Factor; depermute=false)
-    #F_cp = copy(F)
-    L = SupernodalMatrix(F)
-    Z = SupernodalMatrix(F)
+    Z = SupernodalMatrix(F; transpose_chunks=true)
     LL_to_LDL!(Z)
 
-    max_sup_size = get_max_sup_size(L)
-    Y_buf = zeros(L.max_super_rows, max_sup_size)
-    indmap = zeros(Int, size(L, 1))
+    max_sup_size = get_max_sup_size(Z)
+    Y_T_buf = zeros(max_sup_size, Z.max_super_rows)
+    indmap = zeros(Int, size(Z, 1))
 
-    for sup_idx in (L.n_super-1):-1:1
-        Sj = get_Sj(L, sup_idx)
-        Sj_blocks = partition_Sj(L, Sj)
+    for sup_idx in (Z.n_super-1):-1:1
+        Sj = get_Sj(Z, sup_idx)
+        Sj_blocks = partition_Sj(Z, Sj)
 
-        Z_jj, Z_Sj_j = get_split_chunk(Z, sup_idx)
-        sup_size = size(Z_jj, 2)
+        Z_jj, Z_Sj_j_T = get_split_chunk(Z, sup_idx)
+        sup_size = size(Z_jj, 1)
 
-        Y_cur = @view(Y_buf[1:length(Sj), 1:sup_size])
-        compute_Y(Y_cur, Z, Z_Sj_j, Sj_blocks, indmap)
+        Y_T_cur = @view(Y_T_buf[1:sup_size, 1:length(Sj)])
+        compute_Y(Y_T_cur, Z, Z_Sj_j_T, Sj_blocks, indmap)
 
-        mul!(Z_jj, Y_cur', Z_Sj_j, 1, 1)
-        Z_Sj_j .= -Y_cur
+        mul!(Z_jj, Y_T_cur, Z_Sj_j_T', 1, 1)
+        Z_Sj_j_T .= -Y_T_cur
     end
 
     return Z
