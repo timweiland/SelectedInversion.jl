@@ -5,17 +5,24 @@ using MatrixMarket
 using LinearAlgebra, SparseArrays
 
 MAX_ROWS = 1000
+# The following matrices are particularly ill-conditioned, so comparing to a
+# naive inverse fails (we actually expect SelInv to be more "correct"/stable here)
+EXCLUDE_MATS = ["plat362"]
 
 @testset "SPD SuiteSparse matrices" begin
     ssmc = ssmc_db()
-    SPD_mats_tiny = ssmc[(ssmc.numerical_symmetry .== 1) .& (ssmc.positive_definite.== true) .&
-        (ssmc.real .== true) .& (ssmc.nrows .≤ MAX_ROWS), :]
-    paths = fetch_ssmc(SPD_mats_tiny, format="MM")
-    paths = [joinpath(path, "$(SPD_mats_tiny.name[i]).mtx") for (i, path) in enumerate(paths)]
+    SPD_mats_tiny = ssmc[
+        (ssmc.numerical_symmetry.==1).&(ssmc.positive_definite.==true).&(ssmc.real.==true).&(ssmc.nrows.≤MAX_ROWS).&(ssmc.name.∉Ref(
+            EXCLUDE_MATS,
+        )),
+        :,
+    ]
+    paths = fetch_ssmc(SPD_mats_tiny, format = "MM")
+    paths =
+        [joinpath(path, "$(SPD_mats_tiny.name[i]).mtx") for (i, path) in enumerate(paths)]
 
     has_simplicial = false
     has_supernodal = false
-    N_supernodal = 0
 
     for path in paths
         A = MatrixMarket.mmread(path)
@@ -26,13 +33,10 @@ MAX_ROWS = 1000
             has_supernodal = true
         else
             has_simplicial = true
-            continue
         end
 
-        Z = selinv(C)
-        @test check_supernodal_chunks_equal_dense(Z, A⁻¹[C.p, C.p])
-
-        N_supernodal += 1
+        Z = selinv(C; depermute = true)[1]
+        @test check_selinv(Z, A⁻¹)
     end
 
     @test has_simplicial
