@@ -19,4 +19,3 @@ for (name, mat_path) in zip(names, spd_mat_paths)
         SUITE["SelInv_spd_supernodal"][name] = @benchmark selinv($C)
     end
 end
-
