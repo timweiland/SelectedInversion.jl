@@ -49,16 +49,27 @@ It's as simple as it can be:
 using SelectedInversion
 
 A = ... # some sparse matrix
-Z = selinv(A) # its selected inverse
+Z, p = selinv(A) # selected inverse and corresponding permutation vector
 ```
+
+The nonzero entries of `Z` match the corresponding entries in `inv(A[p, p])`.
 
 If you've already computed a Cholesky factorization of your matrix anyway,
 you can directly pass it to `selinv` to save the factorization step.
 
 ```julia
 C = cholesky(A)
-Z = selinv(C)
+Z, p = selinv(C)
 ```
+
+If you don't care about this whole permutation business, use this:
+
+```julia
+Z, _ = selinv(A; depermute=true)
+```
+
+Now the nonzero entries of `Z` directly give you the corresponding entries
+of `inv(A)`.
 
 ## Contributing
 
