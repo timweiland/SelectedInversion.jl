@@ -1,5 +1,8 @@
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 MatrixMarket = "4d4711f2-db25-561a-b6b3-d35e7d4047d3"
+Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
+PrettyTables = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
 SelectedInversion = "043bf095-3f01-458a-9f1c-8cf4448fe908"
 SuiteSparseMatrixCollection = "ac199af8-68bc-55b8-82c4-7abd6f96ed98"

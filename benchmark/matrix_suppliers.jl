@@ -14,12 +14,12 @@ SPD_mats_names = [
     "parabolic_fem",
     "tmt_sym",
     "ecology2",
-    #"G3_circuit"
+    "G3_circuit"
 ]
 
 SSMC = ssmc_db()
 
-function get_suitesparse_spd(; max_n_rows = 1e6)
+function get_suitesparse_spd()
     SPD_mats = SSMC[
         (SSMC.numerical_symmetry.==1).&(SSMC.positive_definite.==true).&(SSMC.real.==true).&(SSMC.name.∈Ref(
             SPD_mats_names,
