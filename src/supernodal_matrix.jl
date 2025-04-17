@@ -1,13 +1,13 @@
 import Base: size, IndexStyle, getindex
 using SparseArrays
+import SparseArrays: sparse
 
 export SupernodalMatrix
 export val_range, col_range, get_rows, get_row_col_idcs, get_max_sup_size
 export get_Sj, partition_Sj
 export get_chunk, get_split_chunk
-export LL_to_LDL!
 
-struct SupernodalMatrix <: AbstractArray{Float64, 2}
+struct SupernodalMatrix <: AbstractArray{Float64,2}
     N::Int
     M::Int
     n_super::Int
@@ -19,13 +19,29 @@ struct SupernodalMatrix <: AbstractArray{Float64, 2}
     rows::Vector{Int}
     max_super_rows::Int
     transposed_chunks::Bool
+    symmetric_access::Bool
+    invperm::Vector{Int64}
+    depermuted_access::Bool
 
-    function SupernodalMatrix(N, M, super_to_col, super_to_vals, super_to_rows, vals, rows, max_super_rows; transpose_chunks=false)
+    function SupernodalMatrix(
+        N,
+        M,
+        super_to_col,
+        super_to_vals,
+        super_to_rows,
+        vals,
+        rows,
+        max_super_rows,
+        invperm;
+        transpose_chunks = false,
+        symmetric_access = false,
+        depermuted_access = false,
+    )
         n_super = length(super_to_col) - 1
 
         col_to_super = Vector{Int}(undef, M)
         cur_start = 1
-        for s in 1:n_super
+        for s = 1:n_super
             cur_stop = super_to_col[s+1]
             col_to_super[cur_start:cur_stop] .= s
             cur_start = cur_stop + 1
@@ -35,11 +51,31 @@ struct SupernodalMatrix <: AbstractArray{Float64, 2}
             transpose_chunks!(vals, super_to_vals, super_to_col)
         end
 
-        return new(N, M, n_super, super_to_col, col_to_super, super_to_vals, super_to_rows, vals, rows, max_super_rows, transpose_chunks)
+        return new(
+            N,
+            M,
+            n_super,
+            super_to_col,
+            col_to_super,
+            super_to_vals,
+            super_to_rows,
+            vals,
+            rows,
+            max_super_rows,
+            transpose_chunks,
+            symmetric_access,
+            invperm,
+            depermuted_access,
+        )
     end
 end
 
-function SupernodalMatrix(F::SparseArrays.CHOLMOD.Factor; transpose_chunks=false)
+function SupernodalMatrix(
+    F::SparseArrays.CHOLMOD.Factor;
+    transpose_chunks = false,
+    symmetric_access = false,
+    depermuted_access = false,
+)
     s = unsafe_load(pointer(F))
     if !Bool(s.is_super)
         throw(ArgumentError("Expected supernodal Cholesky decomposition."))
@@ -49,13 +85,26 @@ function SupernodalMatrix(F::SparseArrays.CHOLMOD.Factor; transpose_chunks=false
     max_super_rows = Int(s.maxesize)
     conv = p -> Base.unsafe_convert(Ptr{Int}, p)
     conv_float = p -> Base.unsafe_convert(Ptr{Float64}, p)
-    super_to_col = copy(unsafe_wrap(Array, conv(s.super), n_super+1))
-    super_to_vals = copy(unsafe_wrap(Array, conv(s.px), n_super+1))
-    super_to_rows = copy(unsafe_wrap(Array, conv(s.pi), n_super+1))
+    super_to_col = copy(unsafe_wrap(Array, conv(s.super), n_super + 1))
+    super_to_vals = copy(unsafe_wrap(Array, conv(s.px), n_super + 1))
+    super_to_rows = copy(unsafe_wrap(Array, conv(s.pi), n_super + 1))
     rows = copy(unsafe_wrap(Array, conv(s.s), Int(s.ssize)))
     vals = copy(unsafe_wrap(Array, conv_float(s.x), Int(s.xsize)))
 
-    return SupernodalMatrix(N, M, super_to_col, super_to_vals, super_to_rows, vals, rows, max_super_rows, transpose_chunks=transpose_chunks)
+    return SupernodalMatrix(
+        N,
+        M,
+        super_to_col,
+        super_to_vals,
+        super_to_rows,
+        vals,
+        rows,
+        max_super_rows,
+        invperm(F.p),
+        transpose_chunks = transpose_chunks,
+        symmetric_access = symmetric_access,
+        depermuted_access = depermuted_access,
+    )
 end
 
 Base.size(S::SupernodalMatrix) = (S.N, S.M)
@@ -91,9 +140,9 @@ function get_chunk(S::SupernodalMatrix, sup_idx::Int)
 end
 
 function transpose_chunks!(vals_arr, super_to_vals, super_to_col)
-    for sup_idx in 1:(length(super_to_vals) - 1)
+    for sup_idx = 1:(length(super_to_vals)-1)
         rng_start = super_to_vals[sup_idx] + 1
-        rng_stop = super_to_vals[sup_idx + 1]
+        rng_stop = super_to_vals[sup_idx+1]
         N_cols = super_to_col[sup_idx+1] - super_to_col[sup_idx]
         N_rows = (rng_stop - rng_start + 1) ÷ N_cols
         chunk = reshape(vals_arr[rng_start:rng_stop], (N_rows, N_cols))
@@ -112,7 +161,7 @@ end
 
 function get_Sj(S::SupernodalMatrix, sup_idx::Int)
     col_rng = col_range(S, sup_idx)
-    return get_rows(S, sup_idx)[(length(col_rng) + 1):end]
+    return get_rows(S, sup_idx)[(length(col_rng)+1):end]
 end
 
 function partition_Sj(S::SupernodalMatrix, Sj)
@@ -125,7 +174,7 @@ function partition_Sj(S::SupernodalMatrix, Sj)
     last_row = 0
 
     for row in Sj
-        sup = S.col_to_super[row + 1]
+        sup = S.col_to_super[row+1]
 
         if cur_sup === nothing
             cur_sup = sup
@@ -143,16 +192,31 @@ function partition_Sj(S::SupernodalMatrix, Sj)
     return blocks
 end
 
-function Base.getindex(S::SupernodalMatrix, I::Vararg{Int, 2})
+function Base.getindex(S::SupernodalMatrix, I::Vararg{Int,2})
     i, j = I
+    if S.depermuted_access
+        i, j = S.invperm[[i, j]]
+    end
     sup_idx = S.col_to_super[j]
+    if i < col_range(S, sup_idx)[1] # Upper triangle access
+        if S.symmetric_access
+            sup_idx = S.col_to_super[i]
+            col = i
+            row = j - 1 # Zero-indexed
+        else
+            return 0.0
+        end
+    else
+        col = j
+        row = i - 1 # Zero-indexed
+    end
     rows_rng = get_rows(S, sup_idx)
-    row_idx = searchsorted(rows_rng, i - 1)
+    row_idx = searchsorted(rows_rng, row)
     if length(row_idx) != 1
         return 0.0
     end
     row_idx = row_idx[1]
-    col_idx = j - S.super_to_col[sup_idx]
+    col_idx = col - S.super_to_col[sup_idx]
     if S.transposed_chunks
         return get_chunk(S, sup_idx)[col_idx, row_idx]
     else
@@ -160,7 +224,7 @@ function Base.getindex(S::SupernodalMatrix, I::Vararg{Int, 2})
     end
 end
 
-function get_diagonal_block(chunk; transpose=false)
+function get_diagonal_block(chunk; transpose = false)
     if transpose
         N_col = size(chunk, 1)
         return @view(chunk[:, 1:N_col])
@@ -172,7 +236,7 @@ end
 
 function get_split_chunk(S::SupernodalMatrix, sup_idx::Int)
     chunk = get_chunk(S, sup_idx)
-    diag_block = get_diagonal_block(chunk; transpose=S.transposed_chunks)
+    diag_block = get_diagonal_block(chunk; transpose = S.transposed_chunks)
     if sup_idx == S.n_super
         return diag_block, nothing
     end
@@ -188,7 +252,7 @@ function get_split_chunk(S::SupernodalMatrix, sup_idx::Int)
 end
 
 function LL_to_LDL!(S::SupernodalMatrix)
-    for j in 1:S.n_super
+    for j = 1:S.n_super
         diag, off_diag = get_split_chunk(S, j)
         if S.transposed_chunks
             LinearAlgebra.LAPACK.trtri!('U', 'N', diag)
@@ -204,4 +268,36 @@ function LL_to_LDL!(S::SupernodalMatrix)
             diag .= diag' * diag
         end
     end
+end
+
+function sparse(S::SupernodalMatrix)
+    Vs = S.vals
+    Is = Int64[]
+    Js = Int64[]
+
+    for sup_idx = 1:S.n_super
+        col_rng = col_range(S, sup_idx)
+        rows = get_rows(S, sup_idx) .+ 1
+        if S.transposed_chunks
+            N_col = length(col_rng)
+            for row in rows
+                append!(Is, repeat([row], N_col))
+                append!(Js, col_rng)
+            end
+        else
+            N_rows = length(rows)
+            for col in col_rng
+                append!(Is, rows)
+                append!(Js, repeat([col], N_rows))
+            end
+        end
+    end
+    M = sparse(Is, Js, Vs)
+    if S.symmetric_access
+        M = sparse(Symmetric(M, :L))
+    end
+    if S.depermuted_access
+        M = permute(M, S.invperm, S.invperm)
+    end
+    return M
 end
