@@ -7,6 +7,42 @@ export val_range, col_range, get_rows, get_row_col_idcs, get_max_sup_size
 export get_Sj, partition_Sj
 export get_chunk, get_split_chunk
 
+"""
+    SupernodalMatrix
+
+Represents a sparse block lower triangular matrix with a supernodal layout.
+A supernode is a set of contiguous columns with identical sparsity pattern below
+the triangular block at the top.
+For each supernode, the corresponding nonzero entries are stored in a dense
+chunk.
+This enables us to use BLAS for operations on these chunks, so we combine the
+strengths of sparse and dense matrices.
+
+# Fields
+- `N::Int`: Number of rows
+- `M::Int`: Number of columns
+- `n_super::Int`: Number of supernodes
+- `super_to_col::Vector{Int}`: Start/end column of each supernode.
+                               Length `n_super + 1`.
+- `col_to_super::Vector{Int}`: Maps each column to its supernode index.
+                               Length `M`.
+- `super_to_vals::Vector{Int}`: Start/end indices of each supernode into `vals`.
+                                Length `n_super + 1`.
+- `super_to_rows::Vector{Int}`: Start/end indices of each supernode into `rows`.
+                                Length `n_super + 1`.
+- `vals::Vector{Float64}`: Nonzero values.
+- `rows::Vector{Int}`: Row indices. CAREFUL: These are zero-indexed!
+- `max_super_rows::Int`: Maximum number of rows below the triangular block in a
+                         supernode chunk.
+- `transposed_chunks::Bool`: Whether to store the transpose of chunks, such that
+                             the first axis in the chunk corresponds to the
+                             columns in the supernode.
+- `symmetric_access::Bool`: Whether to enforce symmetry when accessing entries.
+- `invperm::Vector{Int}`: Permutation to apply before accessing entries
+                          when `depermuted_access == true`.
+- `depermuted_access::Bool`: Whether to apply an inverse permutation before
+                             accessing entries.
+"""
 struct SupernodalMatrix <: AbstractArray{Float64,2}
     N::Int
     M::Int
@@ -20,7 +56,7 @@ struct SupernodalMatrix <: AbstractArray{Float64,2}
     max_super_rows::Int
     transposed_chunks::Bool
     symmetric_access::Bool
-    invperm::Vector{Int64}
+    invperm::Vector{Int}
     depermuted_access::Bool
 
     function SupernodalMatrix(
@@ -48,7 +84,7 @@ struct SupernodalMatrix <: AbstractArray{Float64,2}
         end
 
         if transpose_chunks
-            transpose_chunks!(vals, super_to_vals, super_to_col)
+            _transpose_chunks!(vals, super_to_vals, super_to_col)
         end
 
         return new(
@@ -70,6 +106,18 @@ struct SupernodalMatrix <: AbstractArray{Float64,2}
     end
 end
 
+"""
+    SupernodalMatrix(
+        F::SparseArrays.CHOLMOD.Factor;
+        transpose_chunks = false,
+        symmetric_access = false,
+        depermuted_access = false,
+    )
+
+Construct a `SupernodalMatrix` from a supernodal Cholesky factorization.
+
+Keyword arguments are explained in the `SupernodalMatrix` docstring.
+"""
 function SupernodalMatrix(
     F::SparseArrays.CHOLMOD.Factor;
     transpose_chunks = false,
@@ -110,14 +158,29 @@ end
 Base.size(S::SupernodalMatrix) = (S.N, S.M)
 Base.IndexStyle(::Type{<:SupernodalMatrix}) = IndexCartesian()
 
+"""
+    val_range(S::SupernodalMatrix, sup_idx::Int)
+
+Get the range of indices of supernode `sup_idx` into `S.vals`.
+"""
 function val_range(S::SupernodalMatrix, sup_idx::Int)
     return (S.super_to_vals[sup_idx]+1):(S.super_to_vals[sup_idx+1])
 end
 
+"""
+    col_range(S::SupernodalMatrix, sup_idx::Int)
+
+Get the range of columns of supernode `sup_idx`.
+"""
 function col_range(S::SupernodalMatrix, sup_idx::Int)
     return (S.super_to_col[sup_idx]+1):S.super_to_col[sup_idx+1]
 end
 
+"""
+    get_max_sup_size(S::SupernodalMatrix)
+
+Get the maximum number of columns of any supernode.
+"""
 function get_max_sup_size(S::SupernodalMatrix)
     if S.n_super == 1
         return length(col_range(S, 1))
@@ -125,6 +188,12 @@ function get_max_sup_size(S::SupernodalMatrix)
     return maximum(diff(S.super_to_col)[1:(end-1)])
 end
 
+"""
+    get_chunk(S::SupernodalMatrix, sup_idx::Int)
+
+Get the dense chunk corresponding to supernode `sup_idx`.
+Includes the triangular block at the top.
+"""
 function get_chunk(S::SupernodalMatrix, sup_idx::Int)
     col_rng = col_range(S, sup_idx)
     vals_rng = val_range(S, sup_idx)
@@ -139,7 +208,7 @@ function get_chunk(S::SupernodalMatrix, sup_idx::Int)
     end
 end
 
-function transpose_chunks!(vals_arr, super_to_vals, super_to_col)
+function _transpose_chunks!(vals_arr, super_to_vals, super_to_col)
     for sup_idx = 1:(length(super_to_vals)-1)
         rng_start = super_to_vals[sup_idx] + 1
         rng_stop = super_to_vals[sup_idx+1]
@@ -150,20 +219,44 @@ function transpose_chunks!(vals_arr, super_to_vals, super_to_col)
     end
 end
 
+"""
+    get_rows(S::SupernodalMatrix, sup_idx::Int)
+
+Get the row indices corresponding to supernode `sup_idx`.
+CAREFUL: These are zero-indexed!
+"""
 function get_rows(S::SupernodalMatrix, sup_idx::Int)
     rows_rng = (S.super_to_rows[sup_idx]+1):S.super_to_rows[sup_idx+1]
     return @view(S.rows[rows_rng])
 end
 
+"""
+    get_row_col_idcs(S::SupernodalMatrix, sup_idx::Int)
+
+Get the row and column indices corresponding to supernode `sup_idx`.
+Both sets of indices are one-indexed.
+"""
 function get_row_col_idcs(S::SupernodalMatrix, sup_idx::Int)
     return (get_rows(S, sup_idx) .+ 1, col_range(S, sup_idx))
 end
 
+"""
+    get_Sj(S::SupernodalMatrix, sup_idx::Int)
+
+Get the row indices *below the triangular block* of supernode `sup_idx`.
+CAREFUL: These are zero-indexed!
+"""
 function get_Sj(S::SupernodalMatrix, sup_idx::Int)
     col_rng = col_range(S, sup_idx)
     return get_rows(S, sup_idx)[(length(col_rng)+1):end]
 end
 
+"""
+    partition_Sj(S::SupernodalMatrix, Sj)
+
+Partition the output of `get_Sj` into contiguous subsets where each subset is
+fully contained in one supernode.
+"""
 function partition_Sj(S::SupernodalMatrix, Sj)
     if length(Sj) == 0
         return UnitRange{Int64}[]
@@ -224,7 +317,7 @@ function Base.getindex(S::SupernodalMatrix, I::Vararg{Int,2})
     end
 end
 
-function get_diagonal_block(chunk; transpose = false)
+function _get_diagonal_block(chunk; transpose = false)
     if transpose
         N_col = size(chunk, 1)
         return @view(chunk[:, 1:N_col])
@@ -234,9 +327,15 @@ function get_diagonal_block(chunk; transpose = false)
     end
 end
 
+"""
+    get_split_chunk(S::SupernodalMatrix, sup_idx::Int)
+
+Get the chunk corresponding to supernode `sup_idx`, split into the diagonal /
+lower triangular block at the top, and the remaining block below it.
+"""
 function get_split_chunk(S::SupernodalMatrix, sup_idx::Int)
     chunk = get_chunk(S, sup_idx)
-    diag_block = get_diagonal_block(chunk; transpose = S.transposed_chunks)
+    diag_block = _get_diagonal_block(chunk; transpose = S.transposed_chunks)
     if sup_idx == S.n_super
         return diag_block, nothing
     end

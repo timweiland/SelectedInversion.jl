@@ -1,6 +1,8 @@
 using SelectedInversion
 using Documenter
 
+using SparseArrays
+
 DocMeta.setdocmeta!(
     SelectedInversion,
     :DocTestSetup,
@@ -17,7 +19,10 @@ makedocs(;
         edit_link = "main",
         assets = String[],
     ),
-    pages = ["Home" => "index.md"],
+    pages = [
+        "Home" => "index.md",
+        "SupernodalMatrix" => "supernodal_matrix.md"
+    ],
 )
 
 deploydocs(; repo = "github.com/timweiland/SelectedInversion.jl", devbranch = "main")

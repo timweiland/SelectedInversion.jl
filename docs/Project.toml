@@ -1,3 +1,4 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 SelectedInversion = "043bf095-3f01-458a-9f1c-8cf4448fe908"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
