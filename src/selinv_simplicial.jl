@@ -52,8 +52,8 @@ function selinv_simplicial(F::SparseArrays.CHOLMOD.Factor; depermute = false)
 
     p = F.p
     if depermute
-        return (Z = permute(Z, invperm(p), invperm(p)), p = p)
+        return (Z = Symmetric(Z, :L)[invperm(p), invperm(p)], p = p)
     else
-        return (Z = Z, p = p)
+        return (Z = Symmetric(Z, :L), p = p)
     end
 end
