@@ -25,6 +25,9 @@ SelectedInversion.jl directly interfaces with CHOLMOD-based Cholesky
 factorizations, which are the default for sparse symmetric positive-definite
 matrices in Julia.
 
+The algorithms implemented here are directly based on SelInv [1].
+The simplicial formulation is equivalent to the Takahashi recursions [2, 3].
+
 ## Contents
 
 - [Installation](#installation)
@@ -107,3 +110,7 @@ Check our [contribution guidelines](./CONTRIBUTING.md).
 ## References
 
 [1] Lin, L., Yang, C., Meza, J. C., Lu, J., Ying, L., & E, W. (2011). SelInv---An Algorithm for Selected Inversion of a Sparse Symmetric Matrix. *ACM Transactions on Mathematical Software (TOMS)*, 37(4), 1-19.
+
+[2] Erisman, A. M., & Tinney, W. F. (1975). On computing certain elements of the inverse of a sparse matrix. *Communications of the ACM*, 18(3), 177-179.
+
+[3] Takahashi, K. (1973). Formation of sparse bus impedance matrix and its application to short circuit study. In *Proc. PICA Conference*, June, 1973.
