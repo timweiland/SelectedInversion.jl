@@ -1,6 +1,7 @@
 import Base: size, IndexStyle, getindex
 using SparseArrays
 import SparseArrays: sparse
+import LinearAlgebra: diag
 
 export SupernodalMatrix
 export val_range, col_range, get_rows, get_row_col_idcs, get_max_sup_size
@@ -399,4 +400,19 @@ function sparse(S::SupernodalMatrix)
         M = permute(M, S.invperm, S.invperm)
     end
     return M
+end
+
+function diag(S::SupernodalMatrix)
+    res = zeros(minimum(size(S)))
+    cur_chunk_start = 1
+    for sup_idx in 1:S.n_super
+        cur_diag = diag(get_split_chunk(S, sup_idx)[1])
+        cur_rng = range(start=cur_chunk_start, length=length(cur_diag))
+        copyto!(@view(res[cur_rng]), cur_diag)
+        cur_chunk_start += length(cur_diag)
+    end
+    if S.depermuted_access
+        res = res[S.invperm]
+    end
+    return res
 end
