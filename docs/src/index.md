@@ -24,7 +24,7 @@ To do so:
 
 ## SelInv API
 
-For a concrete usage tutorial, check ...
+Make sure to also check the [Tutorial](@ref).
 
 ```@docs
 selinv

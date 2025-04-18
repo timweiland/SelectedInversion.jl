@@ -1,4 +1,7 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
+MatrixMarket = "4d4711f2-db25-561a-b6b3-d35e7d4047d3"
 SelectedInversion = "043bf095-3f01-458a-9f1c-8cf4448fe908"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+SuiteSparseMatrixCollection = "ac199af8-68bc-55b8-82c4-7abd6f96ed98"

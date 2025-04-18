@@ -10,6 +10,8 @@ DocMeta.setdocmeta!(
     recursive = true,
 )
 
+include("generate_literate.jl")
+
 makedocs(;
     modules = [SelectedInversion],
     authors = "Tim Weiland <hello@timwei.land> and contributors",
@@ -21,6 +23,7 @@ makedocs(;
     ),
     pages = [
         "Home" => "index.md",
+        "Tutorial" => "tutorials/tutorial.md",
         "SupernodalMatrix" => "supernodal_matrix.md"
     ],
 )
