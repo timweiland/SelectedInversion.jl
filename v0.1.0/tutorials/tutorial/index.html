@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Tutorial · SelectedInversion.jl</title><meta name="title" content="Tutorial · SelectedInversion.jl"/><meta property="og:title" content="Tutorial · SelectedInversion.jl"/><meta property="twitter:title" content="Tutorial · SelectedInversion.jl"/><meta name="description" content="Documentation for SelectedInversion.jl."/><meta property="og:description" content="Documentation for SelectedInversion.jl."/><meta property="twitter:description" content="Documentation for SelectedInversion.jl."/><meta property="og:url" content="https://timweiland.github.io/SelectedInversion.jl/tutorials/tutorial/"/><meta property="twitter:url" content="https://timweiland.github.io/SelectedInversion.jl/tutorials/tutorial/"/><link rel="canonical" href="https://timweiland.github.io/SelectedInversion.jl/tutorials/tutorial/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">SelectedInversion.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li class="is-active"><a class="tocitem" href>Tutorial</a><ul class="internal"><li><a class="tocitem" href="#Introduction"><span>Introduction</span></a></li><li><a class="tocitem" href="#Problem-setup"><span>Problem setup</span></a></li><li><a class="tocitem" href="#SelInv"><span>SelInv</span></a></li><li><a class="tocitem" href="#Supernodal-setting"><span>Supernodal setting</span></a></li><li><a class="tocitem" href="#Conclusion"><span>Conclusion</span></a></li></ul></li><li><a class="tocitem" href="../../supernodal_matrix/">SupernodalMatrix</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Tutorial</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Tutorial</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/timweiland/SelectedInversion.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/timweiland/SelectedInversion.jl/blob/main/docs/src/literate-tutorials/tutorial.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Tutorial"><a class="docs-heading-anchor" href="#Tutorial">Tutorial</a><a id="Tutorial-1"></a><a class="docs-heading-anchor-permalink" href="#Tutorial" title="Permalink"></a></h1><h2 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h2><p>In this tutorial, we&#39;re going to explore how to use SelectedInversion.jl to compute the selected inverse of two different sparse symmetric positive definite matrices.</p><h2 id="Problem-setup"><a class="docs-heading-anchor" href="#Problem-setup">Problem setup</a><a id="Problem-setup-1"></a><a class="docs-heading-anchor-permalink" href="#Problem-setup" title="Permalink"></a></h2><p>We&#39;re going to grab two matrices from the <a href="https://sparse.tamu.edu">SuiteSparse matrix collection</a>. Refer to the website for more information on these matrices and where they came from.</p><p>Feel free to skip ahead, as this part is not related directly to SelectedInversion.jl.</p><pre><code class="language-julia hljs">using MatrixMarket, SuiteSparseMatrixCollection
+
+mat_names = [&quot;494_bus&quot;, &quot;parabolic_fem&quot;]
+ssmc = ssmc_db()
+mats_df = ssmc[ssmc.name .∈ Ref(mat_names), :]
+paths = fetch_ssmc(mats_df, format = &quot;MM&quot;)
+paths = [joinpath(path, &quot;$(mats_df.name[i]).mtx&quot;) for (i, path) in enumerate(paths)]
+A = MatrixMarket.mmread(paths[1]) # 494_bus
+B = MatrixMarket.mmread(paths[2]) # parabolic_fem
+size(A), size(B)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">((494, 494), (525825, 525825))</code></pre><h2 id="SelInv"><a class="docs-heading-anchor" href="#SelInv">SelInv</a><a id="SelInv-1"></a><a class="docs-heading-anchor-permalink" href="#SelInv" title="Permalink"></a></h2><p>We&#39;re going to start by tackling the smaller of the two matrices.</p><pre><code class="language-julia hljs">A</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">494×494 SparseMatrixCSC{Float64, Int64} with 1666 stored entries:
+⎡⢟⣵⡀⠈⠡⠀⠀⠀⠀⠊⠀⡀⠊⠂⠀⠁⠐⠀⠀⠀⠀⠈⢂⠀⠀⠀⢀⠀⠀⠐⠀⠀⠀⠔⠚⠄⠀⠀⠀⠀⎤
+⎢⡀⠈⠑⣤⠀⠀⠈⠀⡁⠀⠀⠡⡈⢈⡑⠊⡀⠐⠀⠂⡀⡄⠠⡀⠈⠁⡄⠀⠀⠀⠂⠀⠄⠤⠁⠐⠀⠀⠀⠀⎥
+⎢⠁⠂⠀⠀⠑⢄⡘⡄⠀⠁⠂⢀⠀⠁⠀⠄⠈⡀⠂⠁⠀⠘⠈⠀⠈⣁⠨⠐⡀⠂⠂⠨⠈⠠⠄⡌⠈⡀⠀⠀⎥
+⎢⠀⠀⠂⠀⠒⠬⠻⣦⠀⠂⠁⠐⠀⠀⠂⠁⠀⠁⠀⠄⠂⠁⠂⠂⠀⠀⡄⠀⠐⠠⠀⡖⠀⢈⠂⠂⠐⠀⠀⠀⎥
+⎢⡠⠀⠁⠈⠄⠀⠠⠀⠱⣦⡄⠀⠉⠀⠡⡂⠀⠈⠉⠐⠐⡆⠀⢅⠌⠀⠐⢄⠠⠀⠔⠁⠀⠠⢈⠀⠀⠀⠀⠀⎥
+⎢⠀⠠⠄⡀⠈⢀⢁⠀⠀⠉⢻⣶⠀⠀⢈⠀⠄⠀⠁⢀⠀⠁⠀⠀⠀⠀⠀⡄⠀⠀⠀⠁⠀⠀⠀⠁⠀⠀⡀⡀⎥
+⎢⠪⠀⡂⢈⠄⠀⠀⠀⠃⠀⠀⠀⠛⣤⠐⠀⠁⠈⠠⠢⠂⠀⠀⠀⠀⠀⡀⢄⠠⠐⠀⠚⡂⠤⠌⠈⠀⠠⠀⠀⎥
+⎢⠄⠀⡱⠈⠀⠄⠌⠀⠡⠢⠂⠐⠐⠀⠑⣤⠅⠄⠑⠀⠂⠀⠀⠁⠀⠀⠀⠁⠀⠀⠤⠀⠄⠠⠀⠀⠀⡁⠀⠀⎥
+⎢⠐⠀⢀⠈⠂⠠⠄⠀⡀⠀⠀⠁⡁⠀⠁⠅⠱⣦⢀⡈⠀⢀⡚⡈⠀⠀⠀⠀⠐⢑⠀⠄⠀⠀⢀⡤⡠⡄⠀⠀⎥
+⎢⠀⠀⠠⠀⠌⠀⠀⠄⢃⠀⠁⢀⠠⡂⠑⠀⡀⠰⠑⢄⢀⠀⠈⠠⣤⠢⢠⠈⠀⠀⠁⠂⠍⠨⢀⠂⠈⠀⢂⠀⎥
+⎢⡀⠀⠀⠬⣀⠀⠌⠀⠰⠤⠄⠀⠈⠀⠈⠀⠀⢀⠀⠐⠻⢆⡀⠀⠀⡀⠀⠆⠀⢁⡄⠂⢂⢀⠒⠠⠀⠐⠀⠀⎥
+⎢⠈⠐⠀⠢⠂⠀⠨⠀⠄⢄⠀⠀⠀⠀⠄⠀⡚⠨⠂⡀⠀⠈⠻⣦⡀⠁⠀⠈⠀⠀⠁⠈⠈⢀⠈⢀⢀⠀⠈⠀⎥
+⎢⠀⠀⠆⠀⠆⢠⠀⠀⠂⠁⠀⠀⠀⠀⠀⠀⠀⠀⠠⡛⠀⠠⠄⠈⠿⣧⡁⠀⠀⠈⠂⠄⡐⠀⠜⠀⠀⠀⠀⠘⎥
+⎢⠀⠐⠀⠉⢂⠂⠀⠉⠐⢄⠀⠤⠀⢌⠄⠀⠀⠀⡀⠒⠠⠄⡀⠀⠁⠈⠵⣧⡀⠀⡀⠰⠀⢀⠤⠁⠀⠀⠀⠀⎥
+⎢⢀⠀⠀⠀⠠⠈⠐⡀⠀⠂⠀⠀⢀⠂⠀⠀⢔⢀⠀⠀⠄⢀⠀⠀⡀⠀⠀⠈⠱⣦⡀⠊⠃⠐⡀⠄⠀⠀⠀⠀⎥
+⎢⠀⠀⠈⠀⡈⡀⢠⠤⠔⠁⠄⠀⣠⠀⠀⠃⠀⠄⠡⠀⠠⠉⡁⠀⠈⠄⢀⡈⡠⠈⡑⢌⢈⠐⠐⡄⢀⡀⠀⠀⎥
+⎢⢀⠄⠀⡅⠂⡀⡀⢀⠀⡀⠀⠀⠈⡌⠀⡁⠀⠀⡃⡁⠈⢐⠂⢀⠐⠈⠀⢀⢉⠀⢂⠐⠑⣤⡂⡌⠀⠀⠀⠀⎥
+⎢⠚⠄⢁⠀⡀⠥⠨⠀⠂⠐⠄⠀⡂⠁⠀⠀⠀⡴⠠⠐⠘⡀⠂⢀⠒⠁⠄⠃⠀⠌⠐⠤⡈⠬⠱⢆⣀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠂⠠⠐⠀⠀⠀⠀⠀⠀⡀⠄⠠⠀⠮⠂⠀⢀⠀⠀⠐⠀⠀⠀⠀⠀⠀⠀⠰⠀⠀⠀⠘⠱⢆⣀⠀⎥
+⎣⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠨⠀⠀⠀⠀⠀⠀⠈⠐⠀⠀⠂⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠱⣦⎦</code></pre><p>Let&#39;s compute the selected inverse of <code>A</code>.</p><pre><code class="language-julia hljs">using SelectedInversion
+Z, p = selinv(A)
+Z</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">494×494 LinearAlgebra.Symmetric{Float64, SparseMatrixCSC{Float64, Int64}}:
+ 0.571508  0.555408   ⋅         ⋅        …   ⋅         ⋅         ⋅ 
+ 0.555408  0.555408  0.532709   ⋅            ⋅         ⋅         ⋅ 
+  ⋅        0.532709  0.532709  0.308615      ⋅         ⋅         ⋅ 
+  ⋅         ⋅        0.308615  0.308618      ⋅         ⋅         ⋅ 
+  ⋅         ⋅         ⋅         ⋅            ⋅         ⋅         ⋅ 
+  ⋅         ⋅         ⋅         ⋅        …   ⋅         ⋅         ⋅ 
+  ⋅         ⋅         ⋅         ⋅            ⋅         ⋅         ⋅ 
+  ⋅         ⋅         ⋅         ⋅            ⋅         ⋅         ⋅ 
+  ⋅         ⋅         ⋅         ⋅            ⋅         ⋅         ⋅ 
+  ⋅         ⋅         ⋅         ⋅            ⋅         ⋅        0.156681
+ ⋮                                       ⋱                      
+  ⋅         ⋅         ⋅         ⋅        …  0.144949  0.142319  0.138329
+  ⋅         ⋅         ⋅         ⋅           0.142853  0.145692  0.156411
+  ⋅         ⋅         ⋅         ⋅           0.165404  0.164882  0.157833
+  ⋅         ⋅         ⋅         ⋅           0.165435  0.163997  0.158009
+  ⋅         ⋅         ⋅        0.225619     0.164101  0.163763  0.156825
+  ⋅         ⋅         ⋅         ⋅        …  0.161498  0.160675  0.15752
+  ⋅         ⋅         ⋅         ⋅           0.170756  0.162512  0.155864
+  ⋅         ⋅         ⋅         ⋅           0.162512  0.227046  0.16517
+  ⋅         ⋅         ⋅         ⋅           0.155864  0.16517   0.199368</code></pre><p>Now the nonzero entries of <code>Z</code> correspond to entries in <code>inv(A)</code>.</p><p><code>p</code> is a permutation vector. Sparse Cholesky factorizations reorder the rows and columns of a matrix to reduce fill-in in the Cholesky factor. <code>selinv</code> computes its entries according to this permutation.</p><p>Concretely, this means that if we want to get a specific entry of the inverse, we need to apply the correct permutation first.</p><p>To test this, we&#39;re going to compute the dense full inverse. This is still feasible for such a small matrix, but not recommended in general.</p><pre><code class="language-julia hljs">A_inv = inv(Array(A))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">494×494 Matrix{Float64}:
+ 0.000454823  0.000455516  0.000455591  …  0.000455513  0.000455513
+ 0.000455516  0.359149     0.168952        0.167124     0.167124
+ 0.000455591  0.168952     0.763335        0.166584     0.166584
+ 0.000455516  0.174329     0.168952        0.167124     0.167124
+ 0.000455568  0.16706      0.181584        0.165555     0.165555
+ 0.000455593  0.168953     0.280338     …  0.166584     0.166584
+ 0.000455497  0.160492     0.160623        0.161281     0.161281
+ 0.000455516  0.174329     0.168952        0.167124     0.167124
+ 0.000455506  0.164428     0.166083        0.165823     0.165823
+ 0.000455514  0.168785     0.170365        0.166959     0.166959
+ ⋮                                      ⋱               
+ 0.000455516  0.165192     0.164654     …  0.163712     0.163712
+ 0.000455493  0.159101     0.158863        0.15906      0.15906
+ 0.000455513  0.167124     0.166584        0.178322     0.178252
+ 0.000455513  0.167124     0.166584        0.178322     0.178251
+ 0.000455513  0.167124     0.166584        0.178322     0.178251
+ 0.000455513  0.167124     0.166584     …  0.178322     0.178251
+ 0.000455513  0.167124     0.166584        0.178322     0.178251
+ 0.000455513  0.167124     0.166584        0.182867     0.173707
+ 0.000455513  0.167124     0.166584        0.173707     0.182867</code></pre><p>Compare the values of <code>Z</code> and <code>A_inv</code> at some arbitrary index. They&#39;re not going to match:</p><pre><code class="language-julia hljs">A_inv[42, 172], Z[42, 172]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(0.6254934620417878, 0.0)</code></pre><p>But if we permute Z first, they do match:</p><pre><code class="language-julia hljs">A_inv[42, 172], Z[invperm(p), invperm(p)][42, 172]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(0.6254934620417878, 0.6254934620414534)</code></pre><p>If your use case calls for this kind of depermuted access, you can make life easier with the <code>depermute</code> keyword:</p><pre><code class="language-julia hljs">Z, _ = selinv(A; depermute=true)
+Z</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">494×494 SparseMatrixCSC{Float64, Int64} with 2334 stored entries:
+⎡⢟⣵⡀⡈⠡⠀⠀⠀⢁⠊⠀⡀⠊⣂⡄⠁⠘⠈⡀⢀⠀⠨⣃⠀⠀⠁⢀⢀⠀⠐⠀⠀⢠⢔⠚⠄⠀⠀⠀⠀⎤
+⎢⡀⠨⠑⣤⠀⠐⠨⠀⡁⠀⠀⠡⡈⢈⡑⠊⡀⠰⠄⠂⡀⡄⠠⣀⠈⠁⡄⠀⠀⠀⠂⠀⠄⠤⠁⠑⠀⠀⠀⠀⎥
+⎢⠁⠂⢀⠀⠑⢄⣘⡄⠀⠑⠂⢀⠀⡁⡂⠄⠈⡈⢂⠁⠀⢘⠈⠁⠈⣡⡩⢐⡀⢂⡂⣨⠌⢰⢄⣌⢈⡀⠀⠀⎥
+⎢⠀⠀⠂⠂⠒⠼⠻⣦⠀⠊⠁⠐⠂⠂⠂⠁⠐⠁⠠⠆⠂⠓⠂⠂⠂⠂⡆⠐⠐⠰⠀⡖⠀⢸⠖⠒⠐⠀⠀⠀⎥
+⎢⡡⠐⠁⠈⢄⠀⡠⠀⠱⣦⡄⠀⠉⠈⠡⡂⠀⠉⠉⠐⠐⡆⠀⢥⠌⠁⠑⢤⠠⠀⠔⠁⠀⠰⢈⠀⠀⠀⠀⠀⎥
+⎢⠀⠠⠄⡀⠈⢀⢁⠀⠀⠉⢻⣶⢀⡀⢈⠀⠄⠀⢁⢀⠀⠁⠀⠈⠀⡀⡀⡄⠀⢀⠀⠁⠀⠀⢀⠁⠀⠀⡀⡀⎥
+⎢⠪⢠⡂⢈⠄⠠⠨⠀⡃⠀⠀⠰⣛⣼⠖⠐⠑⢈⠠⠲⠂⠠⠄⠙⠂⠄⡄⢤⠠⠰⠂⠚⡂⠤⠬⠈⠠⠢⠄⠀⎥
+⎢⠄⠉⡱⠈⠈⠌⠌⠀⠡⠢⠂⠐⢘⠁⠑⣤⠍⠄⠑⠁⠢⠈⠁⠁⠁⠁⠁⠉⠀⠈⠤⠈⠌⠨⠨⠀⠈⡁⠀⠀⎥
+⎢⡒⠀⢀⡈⡂⠠⠔⠀⡄⠀⠀⠁⡑⢀⠃⠅⢱⣶⢀⡊⠀⢐⡚⣉⠒⡂⡂⠀⠐⢑⡀⠌⠂⢀⢐⡤⣰⡄⠀⠀⎥
+⎢⠀⢈⠠⠁⠌⠐⠠⠆⢃⠀⠁⢐⢠⡂⠕⠀⡠⠰⠑⢄⢀⠀⠉⠠⣤⠢⢠⠈⠀⠰⠅⢢⠍⠨⢀⠆⠈⠀⢂⠀⎥
+⎢⡀⡀⠀⠬⣀⢀⢬⠀⠰⠤⠄⠀⠈⡀⡈⠂⢀⢀⠀⠐⠻⢆⡀⠤⣀⡀⡀⢆⠂⢁⡆⢂⢒⢸⢒⠠⢀⠐⠐⠀⎥
+⎢⠉⠘⠀⢢⠆⠀⠨⠀⠄⣄⡀⠀⣄⠁⠅⠀⡞⢨⠃⡀⠀⡌⠻⣦⡀⠁⠄⠈⠀⠀⠁⢈⠈⢈⠈⢁⢀⡀⠈⠀⎥
+⎢⠄⠀⠆⠀⠆⣠⠨⠀⠆⠁⠀⠠⠈⠄⠅⠀⠸⠠⠠⡛⠀⠸⠄⠈⠿⣧⡅⠀⠀⠨⠃⠄⡐⢠⠼⡆⠨⠀⠀⠙⎥
+⎢⠀⢐⠀⠉⢃⢊⢈⠉⠑⣄⠀⠬⠀⣍⡅⠀⠈⠈⡀⠒⠠⢌⡀⠁⠁⠉⠵⣧⡀⠈⡀⠰⠀⢨⢬⠁⢈⠀⠀⠀⎥
+⎢⢀⠀⠀⠀⠠⢈⢐⡀⠀⠂⠀⢀⢀⡂⡀⠀⢔⢀⢀⡀⠌⢀⠀⠀⡀⡀⡀⠈⠱⣦⡁⢊⠃⠸⣈⠄⢀⠀⠀⠀⎥
+⎢⠀⠀⠈⠀⡈⣨⢠⠤⠔⠁⠄⠀⣨⠀⡀⠃⡀⠌⠡⣁⠨⢉⡁⢀⠉⠄⢀⡈⡡⢈⡑⢌⢈⠐⠐⡄⢈⡁⠀⠀⎥
+⎢⢀⢖⠀⡅⢂⣁⣀⣀⢀⡀⠀⠀⠈⡌⡂⡁⠈⢀⡃⡁⣘⣐⡂⢀⠐⣈⡀⣀⣉⡀⢂⠐⠑⣤⣂⡌⠀⠀⠀⠀⎥
+⎢⠚⠄⢅⠀⡀⢵⢸⠁⠂⠐⠄⠐⡂⠃⠂⠂⠐⡴⠠⠔⠘⡐⠆⢀⠲⠧⠆⠓⠂⠜⠐⠤⡈⠼⠵⢇⣐⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠂⠰⠐⠀⠀⠀⠀⠀⠠⡂⠆⠠⠐⠾⠂⠀⢀⠐⠀⠰⠂⠂⠂⠐⠀⠐⠆⠰⠀⠀⠐⠘⠻⢆⣀⠀⎥
+⎣⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠨⠀⠁⠀⠀⠀⠀⠈⠐⠐⠀⠂⠀⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠱⣦⎦</code></pre><p>Now the nonzero entries of <code>Z</code> directly give you the corresponding entries of <code>inv(A)</code>.</p><pre><code class="language-julia hljs">A_inv[42, 172], Z[42, 172]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(0.6254934620417878, 0.6254934620414534)</code></pre><h2 id="Supernodal-setting"><a class="docs-heading-anchor" href="#Supernodal-setting">Supernodal setting</a><a id="Supernodal-setting-1"></a><a class="docs-heading-anchor-permalink" href="#Supernodal-setting" title="Permalink"></a></h2><p>Now, let&#39;s tackle the bigger of the two matrices.</p><pre><code class="language-julia hljs">B</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">525825×525825 SparseMatrixCSC{Float64, Int64} with 3674625 stored entries:
+⎡⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠐⠦⣔⡦⣤⣤⣄⣀⡻⠿⢷⣒⣙⠛⠛⠛⎤
+⎢⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⢦⡀⠀⠐⠲⠤⣄⣀⠀⠀⠀⠀⠀⠀⠐⠦⣄⡉⠉⠛⠛⠛⠃⠀⠀⠀⠈⠉⠙⠒⎥
+⎢⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠈⠉⠓⠲⠤⣄⣀⠀⠀⠀⠉⠓⠦⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠙⠲⣄⡘⠒⠒⠦⠤⣄⣀⣈⠉⠀⠀⠀⠀⠀⠀⠉⠓⠦⣄⡀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠉⠓⠮⢭⣷⣶⣶⣾⣭⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠓⠦⣄⡀⎥
+⎢⠀⠀⠈⠳⣄⠀⠀⠀⠀⠀⠻⢆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠙⠲⢤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⎥
+⎢⠀⠀⢀⠀⠈⠳⣄⠀⠀⠀⠀⠀⠻⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡀⠀⠀⠈⠙⠲⢤⣀⠀⠀⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠘⡆⠀⠀⠘⢦⠀⠀⠀⠀⠀⠈⠑⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠳⡄⠀⠀⠀⠀⠀⠈⠳⢤⡀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⢹⡀⠀⢲⠈⢧⠀⠀⠀⠀⠀⠀⠈⠻⢆⠀⠀⠀⠀⠀⠀⠀⠀⠙⣆⠀⠀⠀⠀⢦⠀⠀⠙⢦⡀⠀⠀⎥
+⎢⠀⠀⠀⠀⢧⠀⠸⡄⡎⣇⠀⠀⠀⠀⠀⠀⠀⠀⠻⣦⡀⠀⠀⠀⠀⠀⠀⠈⢧⡀⠀⠀⠈⢧⠀⠀⡆⠙⣆⠀⎥
+⎢⠀⠀⠀⠀⠘⡆⠀⢧⢹⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠑⣤⡀⠀⠀⠀⠀⠀⠀⠳⡄⠀⠀⠈⣇⠀⢹⠸⣼⡆⎥
+⎢⠀⠀⠀⠀⠀⢹⡀⢸⣸⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⢆⠀⠀⠀⠀⠀⠀⠙⣆⠀⠀⠘⣆⠈⣇⣿⣷⎥
+⎢⠰⡄⠰⡄⠀⠀⠃⠀⠃⠛⣇⠀⠀⠰⢤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠛⣤⠀⠀⠀⠀⠀⠈⠧⣄⡀⠘⠀⠘⠘⠛⎥
+⎢⠰⡽⡄⠹⡄⠀⠀⠀⠀⠀⠘⣆⠀⠀⠀⠉⠳⢤⡀⠀⠀⠀⠀⠀⠀⠀⠛⣤⠀⠀⠀⠀⢦⡀⠉⠓⢦⣀⠀⠀⎥
+⎢⠀⣿⣧⠀⠹⡄⠀⠀⠀⠀⠀⠘⣆⠀⠀⠀⠀⠀⠉⠳⢤⡀⠀⠀⠀⠀⠀⠀⠛⣤⠀⠀⠀⠳⡄⠀⢧⢨⣳⡀⎥
+⎢⠀⢹⣿⠀⠀⠹⡄⠀⠀⠀⠀⠀⠘⣆⠀⠀⠀⠀⠀⠀⠀⠉⠳⢤⡀⠀⠀⠀⠀⠀⠛⣤⠀⠀⠙⣆⠈⣇⢿⣷⎥
+⎢⣿⡎⠉⠀⠀⠀⠹⡄⠀⠀⠀⠀⠀⠘⢦⡀⠈⠓⠦⣄⡀⠀⠀⠀⠉⢧⠈⠳⢤⡀⠀⠀⠑⢄⠀⠈⣗⢮⣌⠉⎥
+⎢⢹⢳⠀⠀⠀⠀⠀⠹⡄⠀⠀⠀⠀⠀⠀⠳⣄⠀⠀⠀⠉⠙⠲⢤⣀⠈⢧⠀⠀⠉⠳⢤⡀⠀⠛⢄⠘⢮⢿⣷⎥
+⎢⣷⠘⡆⠀⠀⠀⠀⠀⠹⡄⠀⠀⠀⠀⠀⠀⠈⠳⣌⠉⣓⡒⠦⢤⣀⠀⠈⢳⡉⣓⠦⢤⡹⣝⡲⣄⣑⣼⢿⣦⎥
+⎣⣿⠀⢳⠀⠀⠀⠀⠀⠀⠹⡄⠀⠀⠀⠀⠀⠀⠀⠈⠙⠲⠿⢿⣿⣶⠀⠀⠀⠙⠺⢿⣷⡆⠙⢿⣷⠻⣷⣿⣿⎦</code></pre><p>We could directly apply <code>selinv</code> to <code>B</code>. But if we have access to a Cholesky factorization of <code>B</code>, we can pass that to <code>selinv</code> instead, which is going to be faster because <code>selinv</code> would have computed a Cholesky internally anyways.</p><p>So just to prove a point, let&#39;s first compute a Cholesky factorization:</p><pre><code class="language-julia hljs">using LinearAlgebra
+C = cholesky(B)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SparseArrays.CHOLMOD.Factor{Float64, Int64}
+type:    LLt
+method:  supernodal
+maxnnz:  0
+nnz:     41962442
+success: true
+</code></pre><p>As we can see, this is a <em>supernodal</em> Cholesky factorization. Supernodal factorizations chunk contiguous columns with an identical sparsity pattern. Computations may then leverage BLAS for these chunks, which can speed things up quite a lot.</p><p>SelInv also uses the supernodal structure internally. As a result, the return type of <code>Z</code> is now different. Let&#39;s compute the selected inverse.</p><pre><code class="language-julia hljs">Z, p = selinv(C; depermute=true)
+Z</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">525825×525825 SupernodalMatrix:
+ 43.4286   0.0      0.0      0.0     …   0.0      0.0      0.0      0.0
+  0.0     21.7203   0.0      0.0         0.0      0.0      0.0      0.0
+  0.0      0.0     43.4276   0.0         0.0      0.0      0.0      0.0
+  0.0      0.0      0.0     43.4286      0.0      0.0      0.0      0.0
+  0.0      0.0      0.0      0.0         0.0      0.0     13.1161  16.7205
+  0.0      0.0      0.0      0.0     …   0.0      0.0      0.0      0.0
+  0.0      0.0      0.0      0.0         0.0      0.0      0.0      0.0
+  0.0      0.0      0.0      0.0         0.0      0.0      0.0      0.0
+  0.0      0.0      0.0      0.0         0.0      0.0      0.0      0.0
+  0.0      0.0      0.0      0.0         0.0      0.0      0.0      0.0
+  ⋮                                  ⋱                             
+  0.0      0.0      0.0      0.0         0.0      0.0      0.0      0.0
+  0.0      0.0      0.0      0.0         0.0      0.0      0.0      0.0
+  0.0      0.0      0.0      0.0         0.0      0.0      0.0      0.0
+  0.0      0.0      0.0      0.0         0.0      0.0      0.0      0.0
+  0.0      0.0      0.0      0.0     …   0.0      0.0      0.0      0.0
+  0.0      0.0      0.0      0.0        21.7203  14.4534   0.0      0.0
+  0.0      0.0      0.0      0.0        14.4534  21.7203   0.0      0.0
+  0.0      0.0      0.0      0.0         0.0      0.0     21.7203  14.4534
+  0.0      0.0      0.0      0.0         0.0      0.0     14.4534  21.7203</code></pre><p><code>Z</code> is now a <code>SupernodalMatrix</code>, which is a custom type defined in SelectedInversion.jl.</p><p>It&#39;s a subtype of <code>AbstractMatrix</code>, so you can index into it as you would expect. Let&#39;s check the value of some arbitrary entry.</p><pre><code class="language-julia hljs">e5 = zeros(size(B, 2))
+e5[5] = 1.
+(B \ e5)[end], Z[end, 5]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(16.720493403782914, 16.720493403782914)</code></pre><p>The diagonal might be particularly relevant to some applications:</p><pre><code class="language-julia hljs">diag(Z)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">525825-element Vector{Float64}:
+ 43.428594188883665
+ 21.720312275144835
+ 43.42757082606358
+ 43.42859418888121
+ 21.720312275144153
+ 43.42757082606434
+ 21.808399205659505
+ 11.017148901424683
+ 21.89769199236264
+ 10.954514208803069
+  ⋮
+ 21.720464508486046
+ 21.72043068182586
+ 21.720401136624524
+ 21.72037585161697
+ 21.720354808609045
+ 21.720337992459942
+ 21.72032539107257
+ 21.720316995382166
+ 21.720312799349735</code></pre><p>It&#39;s also possible to convert <code>Z</code> into a sparse matrix. But this is fairly slow and eats up a lot of memory. As such, it should be avoided unless it&#39;s truly necessary.</p><pre><code class="language-julia hljs">using SparseArrays
+sparse(Z)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">525825×525825 SparseMatrixCSC{Float64, Int64} with 83399059 stored entries:
+⎡⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⎤
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⎥
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⎥
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⎥
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⎥
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⎥
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⎥
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣗⎥
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣟⎥
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⎥
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⎥
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⎥
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣟⎥
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣟⎥
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⎥
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⎥
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣯⎥
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⎥
+⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⎥
+⎣⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⢿⣿⢿⣿⣿⣿⣿⣿⣿⣿⢿⣿⢿⣿⣿⣿⣿⡿⣿⢿⣿⠿⣿⣿⣿⎦</code></pre><h2 id="Conclusion"><a class="docs-heading-anchor" href="#Conclusion">Conclusion</a><a id="Conclusion-1"></a><a class="docs-heading-anchor-permalink" href="#Conclusion" title="Permalink"></a></h2><p>SelectedInversion.jl lets you compute the selected inverse of a sparse symmetric positive definite matrix efficiently. Where applicable, it makes use of supernodal factorizations and thus scales to matrices with more than a million columns.</p><p>As of now, it does not support unsymmetric matrices and does not explicitly make use of parallelization along the elimination tree. If you&#39;re interested in helping develop these features, feel free to open an issue or a pull request on GitHub.</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../../supernodal_matrix/">SupernodalMatrix »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.1 on <span class="colophon-date" title="Saturday 19 April 2025 10:58">Saturday 19 April 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
