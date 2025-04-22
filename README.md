@@ -37,13 +37,13 @@ The simplicial formulation is equivalent to the Takahashi recursions [2, 3].
 
 ## Installation
 
-SelectedInversion.jl is not yet a registered Julia package.
-Until it is, you can install it from this GitHub repository.
+SelectedInversion.jl is a registered Julia package.
+You can install it directly from the Pkg REPL.
 To do so:
 
 1. [Download Julia (>= version 1.10)](https://julialang.org/downloads/).
 
-2. Launch the Julia REPL and type `] add https://github.com/timweiland/SelectedInversion.jl`. 
+2. Launch the Julia REPL and type `] add SelectedInversion`. 
 
 ## Usage
 
