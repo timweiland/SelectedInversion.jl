@@ -3,6 +3,7 @@ using SelectedInversion
 using SuiteSparseMatrixCollection
 using MatrixMarket
 using LinearAlgebra, SparseArrays
+using LDLFactorizations
 
 MAX_ROWS = 1000
 # The following matrices are particularly ill-conditioned, so comparing to a
@@ -24,7 +25,8 @@ EXCLUDE_MATS = ["plat362"]
     has_simplicial = false
     has_supernodal = false
 
-    for path in paths
+    @testset "Matrix $(SPD_mats_tiny.name[i])" for i in eachindex(paths)
+        path = paths[i]
         A = MatrixMarket.mmread(path)
         A⁻¹ = inv(Array(A))
         C = cholesky(A)
@@ -37,6 +39,15 @@ EXCLUDE_MATS = ["plat362"]
 
         Z = selinv(C; depermute = true)[1]
         @test check_selinv(Z, A⁻¹)
+
+        Z_ldlt = selinv(ldlt(A); depermute = true)[1]
+        @test check_selinv(Z_ldlt, A⁻¹)
+
+        if A isa SparseMatrixCSC{Int}
+            A = Float64.(A)
+        end
+        Z_ldl = selinv(ldl(A); depermute = true)[1]
+        @test check_selinv(Z_ldl, A⁻¹)
     end
 
     @test has_simplicial
