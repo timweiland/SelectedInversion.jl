@@ -24,6 +24,8 @@ Selected inversion algorithms efficiently compute those entries of the inverse t
 SelectedInversion.jl directly interfaces with CHOLMOD-based Cholesky
 factorizations, which are the default for sparse symmetric positive-definite
 matrices in Julia.
+It also supports factorizations obtained from LDLFactorizations.jl through a
+package extension.
 
 The algorithms implemented here are directly based on SelInv [1].
 The simplicial formulation is equivalent to the Takahashi recursions [2, 3].
