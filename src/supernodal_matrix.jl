@@ -405,9 +405,9 @@ end
 function diag(S::SupernodalMatrix)
     res = zeros(minimum(size(S)))
     cur_chunk_start = 1
-    for sup_idx in 1:S.n_super
+    for sup_idx = 1:S.n_super
         cur_diag = diag(get_split_chunk(S, sup_idx)[1])
-        cur_rng = range(start=cur_chunk_start, length=length(cur_diag))
+        cur_rng = range(start = cur_chunk_start, length = length(cur_diag))
         copyto!(@view(res[cur_rng]), cur_diag)
         cur_chunk_start += length(cur_diag)
     end

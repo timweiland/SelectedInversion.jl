@@ -26,11 +26,11 @@ function build_table()
     end
 
     df = DataFrame(
-        "Problem"=>problems,
-        "N"=>Ns,
-        "NNZ"=>nnzs,
-        "Factorization time (sec)"=>fac_measurements,
-        "SelInv time (sec)"=>selinv_measurements,
+        "Problem" => problems,
+        "N" => Ns,
+        "NNZ" => nnzs,
+        "Factorization time (sec)" => fac_measurements,
+        "SelInv time (sec)" => selinv_measurements,
     )
     sort!(df, [:N])
     return df

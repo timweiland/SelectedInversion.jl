@@ -14,7 +14,7 @@ SPD_mats_names = [
     "parabolic_fem",
     "tmt_sym",
     "ecology2",
-    "G3_circuit"
+    "G3_circuit",
 ]
 
 SSMC = ssmc_db()

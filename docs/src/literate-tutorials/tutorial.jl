@@ -14,7 +14,7 @@ using MatrixMarket, SuiteSparseMatrixCollection
 
 mat_names = ["494_bus", "parabolic_fem"]
 ssmc = ssmc_db()
-mats_df = ssmc[ssmc.name .∈ Ref(mat_names), :]
+mats_df = ssmc[ssmc.name.∈Ref(mat_names), :]
 paths = fetch_ssmc(mats_df, format = "MM")
 paths = [joinpath(path, "$(mats_df.name[i]).mtx") for (i, path) in enumerate(paths)]
 A = MatrixMarket.mmread(paths[1]) # 494_bus
@@ -53,7 +53,7 @@ A_inv[42, 172], Z[invperm(p), invperm(p)][42, 172]
 
 # If your use case calls for this kind of depermuted access, you can make life
 # easier with the `depermute` keyword:
-Z, _ = selinv(A; depermute=true)
+Z, _ = selinv(A; depermute = true)
 Z
 
 # Now the nonzero entries of `Z` directly give you the corresponding entries of
@@ -81,7 +81,7 @@ C = cholesky(B)
 # SelInv also uses the supernodal structure internally.
 # As a result, the return type of `Z` is now different.
 # Let's compute the selected inverse.
-Z, p = selinv(C; depermute=true)
+Z, p = selinv(C; depermute = true)
 Z
 
 # `Z` is now a `SupernodalMatrix`, which is a custom type defined in
@@ -90,8 +90,8 @@ Z
 # It's a subtype of `AbstractMatrix`, so you can index into it as you would expect.
 # Let's check the value of some arbitrary entry.
 e5 = zeros(size(B, 2))
-e5[5] = 1.
-(B \ e5)[end], Z[end, 5]
+e5[5] = 1.0
+(B\e5)[end], Z[end, 5]
 
 # The diagonal might be particularly relevant to some applications:
 diag(Z)

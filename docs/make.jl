@@ -24,7 +24,7 @@ makedocs(;
     pages = [
         "Home" => "index.md",
         "Tutorial" => "tutorials/tutorial.md",
-        "SupernodalMatrix" => "supernodal_matrix.md"
+        "SupernodalMatrix" => "supernodal_matrix.md",
     ],
 )
 
