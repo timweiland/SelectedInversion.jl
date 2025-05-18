@@ -40,20 +40,24 @@ function selinv_simplicial(F::SparseArrays.CHOLMOD.Factor; depermute = false)
         ZD = sparse(F.LD)
         Z, d = SparseArrays.CHOLMOD.getLd!(ZD)
         for k in axes(Z, 2)
-            Z[k, k] = 1 / d^2
+            Z[k, k] = 1 / d[k]
         end
     end
 
-    N = size(Z, 2)
-    Y_buf = zeros(N - 1)
-    for j = (N-1):-1:1
-        update_col!(Y_buf, Z, j)
-    end
+    _selinv_simplicial_Z!(Z)
 
     p = F.p
     if depermute
         return (Z = Symmetric(Z, :L)[invperm(p), invperm(p)], p = p)
     else
         return (Z = Symmetric(Z, :L), p = p)
+    end
+end
+
+function _selinv_simplicial_Z!(Z::SparseMatrixCSC)
+    N = size(Z, 2)
+    Y_buf = zeros(N - 1)
+    for j = (N-1):-1:1
+        update_col!(Y_buf, Z, j)
     end
 end
