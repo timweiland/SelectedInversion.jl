@@ -86,6 +86,8 @@ function selinv_supernodal(F::SparseArrays.CHOLMOD.Factor; depermute = false)
         compute_Y(Y_T_cur, Z, Z_Sj_j_T, Sj_blocks, indmap)
 
         mul!(Z_jj, Y_T_cur, Z_Sj_j_T', 1, 1)
+        Z_jj .= 0.5 * (Z_jj + Z_jj') # Restore symmetry
+
         Z_Sj_j_T .= -Y_T_cur
     end
 
