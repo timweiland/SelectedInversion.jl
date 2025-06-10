@@ -355,17 +355,17 @@ function LL_to_LDL!(S::SupernodalMatrix)
     for j = 1:S.n_super
         diag, off_diag = get_split_chunk(S, j)
         if S.transposed_chunks
-            LinearAlgebra.LAPACK.trtri!('U', 'N', diag)
             if j < S.n_super
-                off_diag .= diag * off_diag
+                LinearAlgebra.LAPACK.trtrs!('U', 'N', 'N', diag, off_diag)
             end
-            diag .= diag * diag'
+            LinearAlgebra.LAPACK.potri!('U', diag)
+            diag .= Symmetric(diag, :U)
         else
             LinearAlgebra.LAPACK.trtri!('L', 'N', diag)
             if j < S.n_super
                 off_diag .= off_diag * diag
             end
-            diag .= diag' * diag
+            diag .= Symmetric(diag' * diag)
         end
     end
 end
