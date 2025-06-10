@@ -144,23 +144,23 @@ e5[5] = 1.0
 (B\e5)[end], Z[end, 5]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(16.720493403782914, 16.720493403782914)</code></pre><p>The diagonal might be particularly relevant to some applications:</p><pre><code class="language-julia hljs">diag(Z)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">525825-element Vector{Float64}:
  43.428594188883665
  21.720312275144835
- 43.42757082606358
- 43.42859418888121
+ 43.42757082606359
+ 43.428594188881206
  21.720312275144153
- 43.42757082606434
- 21.808399205659505
+ 43.427570826064326
+ 21.80839920565951
  11.017148901424683
  21.89769199236264
- 10.954514208803069
+ 10.954514208803067
   ⋮
- 21.720464508486046
- 21.72043068182586
+ 21.720464508486053
+ 21.720430681825867
  21.720401136624524
  21.72037585161697
  21.720354808609045
- 21.720337992459942
+ 21.720337992459946
  21.72032539107257
- 21.720316995382166
+ 21.720316995382163
  21.720312799349735</code></pre><p>It&#39;s also possible to convert <code>Z</code> into a sparse matrix. But this is fairly slow and eats up a lot of memory. As such, it should be avoided unless it&#39;s truly necessary.</p><pre><code class="language-julia hljs">using SparseArrays
 sparse(Z)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">525825×525825 SparseMatrixCSC{Float64, Int64} with 83399059 stored entries:
 ⎡⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⎤
@@ -182,4 +182,4 @@ sparse(Z)</code></pre><pre class="documenter-example-output"><code class="nohigh
 ⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣯⎥
 ⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⎥
 ⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⎥
-⎣⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⢿⣿⢿⣿⣿⣿⣿⣿⣿⣿⢿⣿⢿⣿⣿⣿⣿⡿⣿⢿⣿⠿⣿⣿⣿⎦</code></pre><h2 id="Conclusion"><a class="docs-heading-anchor" href="#Conclusion">Conclusion</a><a id="Conclusion-1"></a><a class="docs-heading-anchor-permalink" href="#Conclusion" title="Permalink"></a></h2><p>SelectedInversion.jl lets you compute the selected inverse of a sparse symmetric positive definite matrix efficiently. Where applicable, it makes use of supernodal factorizations and thus scales to matrices with more than a million columns.</p><p>As of now, it does not support unsymmetric matrices and does not explicitly make use of parallelization along the elimination tree. If you&#39;re interested in helping develop these features, feel free to open an issue or a pull request on GitHub.</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../../supernodal_matrix/">SupernodalMatrix »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.11.4 on <span class="colophon-date" title="Sunday 18 May 2025 19:18">Sunday 18 May 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+⎣⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⢿⣿⢿⣿⣿⣿⣿⣿⣿⣿⢿⣿⢿⣿⣿⣿⣿⡿⣿⢿⣿⠿⣿⣿⣿⎦</code></pre><h2 id="Conclusion"><a class="docs-heading-anchor" href="#Conclusion">Conclusion</a><a id="Conclusion-1"></a><a class="docs-heading-anchor-permalink" href="#Conclusion" title="Permalink"></a></h2><p>SelectedInversion.jl lets you compute the selected inverse of a sparse symmetric positive definite matrix efficiently. Where applicable, it makes use of supernodal factorizations and thus scales to matrices with more than a million columns.</p><p>As of now, it does not support unsymmetric matrices and does not explicitly make use of parallelization along the elimination tree. If you&#39;re interested in helping develop these features, feel free to open an issue or a pull request on GitHub.</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../../supernodal_matrix/">SupernodalMatrix »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.12.0 on <span class="colophon-date" title="Tuesday 10 June 2025 14:15">Tuesday 10 June 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
