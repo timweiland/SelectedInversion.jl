@@ -48,6 +48,38 @@ EXCLUDE_MATS = ["plat362"]
         end
         Z_ldl = selinv(ldl(A); depermute = true)[1]
         @test check_selinv(Z_ldl, A⁻¹)
+
+        # Test selinv_diag correctness
+        d_true = diag(A⁻¹)
+        
+        # Test with depermute=true (should match true diagonal)
+        d_selinv_diag = selinv_diag(A; depermute = true)
+        @test d_selinv_diag ≈ d_true
+        
+        # Test default behavior (should be same as depermute=true)
+        d_selinv_diag_default = selinv_diag(A)
+        @test d_selinv_diag_default ≈ d_true
+        @test d_selinv_diag_default ≈ d_selinv_diag
+        
+        # Test with depermute=false (should match permuted diagonal)
+        d_selinv_diag_perm = selinv_diag(A; depermute = false)
+        Z_perm = selinv(A; depermute = false)[1]
+        @test d_selinv_diag_perm ≈ diag(Z_perm)
+        
+        # Test with factorization input
+        d_from_chol = selinv_diag(C; depermute = true)
+        @test d_from_chol ≈ d_true
+        
+        # Test factorization default behavior
+        d_from_chol_default = selinv_diag(C)
+        @test d_from_chol_default ≈ d_true
+        
+        # Test with LDLFactorizations
+        d_ldlt = selinv_diag(ldlt(A); depermute = true)
+        @test d_ldlt ≈ d_true
+        
+        d_ldl = selinv_diag(ldl(A); depermute = true)
+        @test d_ldl ≈ d_true
     end
 
     @test has_simplicial

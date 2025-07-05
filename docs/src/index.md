@@ -28,4 +28,5 @@ Make sure to also check the [Tutorial](@ref).
 
 ```@docs
 selinv
+selinv_diag
 ```

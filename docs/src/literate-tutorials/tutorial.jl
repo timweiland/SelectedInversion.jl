@@ -96,6 +96,30 @@ e5[5] = 1.0
 # The diagonal might be particularly relevant to some applications:
 diag(Z)
 
+# ## Computing Only the Diagonal
+# For many applications, you only need the diagonal entries of the inverse matrix.
+# For example, in Gaussian Markov Random Fields, the diagonal of the inverse 
+# precision matrix gives the marginal variances.
+#
+# Instead of computing the full selected inverse and then extracting the diagonal,
+# you can use `selinv_diag` for better performance:
+d = selinv_diag(A)
+d
+
+# This is equivalent to `diag(selinv(A; depermute=true))` but more efficient,
+# especially for simplicial factorizations.
+# Let's verify they give the same result:
+d_full = diag(selinv(A; depermute=true)[1])
+d ≈ d_full
+
+# You can also pass pre-computed factorizations:
+d_from_chol = selinv_diag(C)
+d_from_chol
+
+# And control the permutation behavior:
+d_permuted = selinv_diag(A; depermute=false)
+d_permuted
+
 # It's also possible to convert `Z` into a sparse matrix.
 # But this is fairly slow and eats up a lot of memory.
 # As such, it should be avoided unless it's truly necessary.

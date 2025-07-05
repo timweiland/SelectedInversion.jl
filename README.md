@@ -77,6 +77,30 @@ Z, _ = selinv(A; depermute=true)
 Now the nonzero entries of `Z` directly give you the corresponding entries
 of `inv(A)`.
 
+### Computing Only the Diagonal
+
+For many applications, you only need the diagonal entries of the inverse matrix.
+For example, in Gaussian Markov Random Fields, the diagonal of the inverse precision matrix gives the marginal variances.
+
+```julia
+d = selinv_diag(A)  # diagonal of inv(A)
+```
+
+This is much more efficient than computing the full selected inverse and then extracting the diagonal, especially for simplicial factorizations.
+
+You can also pass pre-computed factorizations:
+
+```julia
+C = cholesky(A)
+d = selinv_diag(C)  # same result, but reuses factorization
+```
+
+The `selinv_diag` function supports the same `depermute` keyword as `selinv`:
+
+```julia
+d_permuted = selinv_diag(A; depermute=false)  # diagonal of permuted inverse
+```
+
 ## Performance
 
 **tl;dr**: It's pretty fast.
