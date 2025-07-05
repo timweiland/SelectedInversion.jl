@@ -40,6 +40,18 @@ e5[5] = 1.0
 
 diag(Z)
 
+d = selinv_diag(A)
+d
+
+d_full = diag(selinv(A; depermute=true)[1])
+d ≈ d_full
+
+d_from_chol = selinv_diag(C)
+d_from_chol
+
+d_permuted = selinv_diag(A; depermute=false)
+d_permuted
+
 using SparseArrays
 sparse(Z)
 
