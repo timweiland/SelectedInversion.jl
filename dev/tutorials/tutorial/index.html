@@ -71,27 +71,27 @@ Z</code></pre><pre class="documenter-example-output"><code class="nohighlight hl
  0.000455513  0.167124     0.166584        0.178322     0.178251
  0.000455513  0.167124     0.166584        0.182867     0.173707
  0.000455513  0.167124     0.166584        0.173707     0.182867</code></pre><p>Compare the values of <code>Z</code> and <code>A_inv</code> at some arbitrary index. They&#39;re not going to match:</p><pre><code class="language-julia hljs">A_inv[42, 172], Z[42, 172]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(0.6254934620417878, 0.0)</code></pre><p>But if we permute Z first, they do match:</p><pre><code class="language-julia hljs">A_inv[42, 172], Z[invperm(p), invperm(p)][42, 172]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(0.6254934620417878, 0.6254934620414534)</code></pre><p>If your use case calls for this kind of depermuted access, you can make life easier with the <code>depermute</code> keyword:</p><pre><code class="language-julia hljs">Z, _ = selinv(A; depermute = true)
-Z</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">494×494 SparseMatrixCSC{Float64, Int64} with 494 stored entries:
-⎡⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎤
-⎢⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⎥
-⎣⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⢄⎦</code></pre><p>Now the nonzero entries of <code>Z</code> directly give you the corresponding entries of <code>inv(A)</code>.</p><pre><code class="language-julia hljs">A_inv[42, 172], Z[42, 172]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(0.6254934620417878, 0.0)</code></pre><h2 id="Supernodal-setting"><a class="docs-heading-anchor" href="#Supernodal-setting">Supernodal setting</a><a id="Supernodal-setting-1"></a><a class="docs-heading-anchor-permalink" href="#Supernodal-setting" title="Permalink"></a></h2><p>Now, let&#39;s tackle the bigger of the two matrices.</p><pre><code class="language-julia hljs">B</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">525825×525825 SparseMatrixCSC{Float64, Int64} with 3674625 stored entries:
+Z</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">494×494 SparseMatrixCSC{Float64, Int64} with 2334 stored entries:
+⎡⢟⣵⡀⡈⠡⠀⠀⠀⢁⠊⠀⡀⠊⣂⡄⠁⠘⠈⡀⢀⠀⠨⣃⠀⠀⠁⢀⢀⠀⠐⠀⠀⢠⢔⠚⠄⠀⠀⠀⠀⎤
+⎢⡀⠨⠑⣤⠀⠐⠨⠀⡁⠀⠀⠡⡈⢈⡑⠊⡀⠰⠄⠂⡀⡄⠠⣀⠈⠁⡄⠀⠀⠀⠂⠀⠄⠤⠁⠑⠀⠀⠀⠀⎥
+⎢⠁⠂⢀⠀⠑⢄⣘⡄⠀⠑⠂⢀⠀⡁⡂⠄⠈⡈⢂⠁⠀⢘⠈⠁⠈⣡⡩⢐⡀⢂⡂⣨⠌⢰⢄⣌⢈⡀⠀⠀⎥
+⎢⠀⠀⠂⠂⠒⠼⠻⣦⠀⠊⠁⠐⠂⠂⠂⠁⠐⠁⠠⠆⠂⠓⠂⠂⠂⠂⡆⠐⠐⠰⠀⡖⠀⢸⠖⠒⠐⠀⠀⠀⎥
+⎢⡡⠐⠁⠈⢄⠀⡠⠀⠱⣦⡄⠀⠉⠈⠡⡂⠀⠉⠉⠐⠐⡆⠀⢥⠌⠁⠑⢤⠠⠀⠔⠁⠀⠰⢈⠀⠀⠀⠀⠀⎥
+⎢⠀⠠⠄⡀⠈⢀⢁⠀⠀⠉⢻⣶⢀⡀⢈⠀⠄⠀⢁⢀⠀⠁⠀⠈⠀⡀⡀⡄⠀⢀⠀⠁⠀⠀⢀⠁⠀⠀⡀⡀⎥
+⎢⠪⢠⡂⢈⠄⠠⠨⠀⡃⠀⠀⠰⣛⣼⠖⠐⠑⢈⠠⠲⠂⠠⠄⠙⠂⠄⡄⢤⠠⠰⠂⠚⡂⠤⠬⠈⠠⠢⠄⠀⎥
+⎢⠄⠉⡱⠈⠈⠌⠌⠀⠡⠢⠂⠐⢘⠁⠑⣤⠍⠄⠑⠁⠢⠈⠁⠁⠁⠁⠁⠉⠀⠈⠤⠈⠌⠨⠨⠀⠈⡁⠀⠀⎥
+⎢⡒⠀⢀⡈⡂⠠⠔⠀⡄⠀⠀⠁⡑⢀⠃⠅⢱⣶⢀⡊⠀⢐⡚⣉⠒⡂⡂⠀⠐⢑⡀⠌⠂⢀⢐⡤⣰⡄⠀⠀⎥
+⎢⠀⢈⠠⠁⠌⠐⠠⠆⢃⠀⠁⢐⢠⡂⠕⠀⡠⠰⠑⢄⢀⠀⠉⠠⣤⠢⢠⠈⠀⠰⠅⢢⠍⠨⢀⠆⠈⠀⢂⠀⎥
+⎢⡀⡀⠀⠬⣀⢀⢬⠀⠰⠤⠄⠀⠈⡀⡈⠂⢀⢀⠀⠐⠻⢆⡀⠤⣀⡀⡀⢆⠂⢁⡆⢂⢒⢸⢒⠠⢀⠐⠐⠀⎥
+⎢⠉⠘⠀⢢⠆⠀⠨⠀⠄⣄⡀⠀⣄⠁⠅⠀⡞⢨⠃⡀⠀⡌⠻⣦⡀⠁⠄⠈⠀⠀⠁⢈⠈⢈⠈⢁⢀⡀⠈⠀⎥
+⎢⠄⠀⠆⠀⠆⣠⠨⠀⠆⠁⠀⠠⠈⠄⠅⠀⠸⠠⠠⡛⠀⠸⠄⠈⠿⣧⡅⠀⠀⠨⠃⠄⡐⢠⠼⡆⠨⠀⠀⠙⎥
+⎢⠀⢐⠀⠉⢃⢊⢈⠉⠑⣄⠀⠬⠀⣍⡅⠀⠈⠈⡀⠒⠠⢌⡀⠁⠁⠉⠵⣧⡀⠈⡀⠰⠀⢨⢬⠁⢈⠀⠀⠀⎥
+⎢⢀⠀⠀⠀⠠⢈⢐⡀⠀⠂⠀⢀⢀⡂⡀⠀⢔⢀⢀⡀⠌⢀⠀⠀⡀⡀⡀⠈⠱⣦⡁⢊⠃⠸⣈⠄⢀⠀⠀⠀⎥
+⎢⠀⠀⠈⠀⡈⣨⢠⠤⠔⠁⠄⠀⣨⠀⡀⠃⡀⠌⠡⣁⠨⢉⡁⢀⠉⠄⢀⡈⡡⢈⡑⢌⢈⠐⠐⡄⢈⡁⠀⠀⎥
+⎢⢀⢖⠀⡅⢂⣁⣀⣀⢀⡀⠀⠀⠈⡌⡂⡁⠈⢀⡃⡁⣘⣐⡂⢀⠐⣈⡀⣀⣉⡀⢂⠐⠑⣤⣂⡌⠀⠀⠀⠀⎥
+⎢⠚⠄⢅⠀⡀⢵⢸⠁⠂⠐⠄⠐⡂⠃⠂⠂⠐⡴⠠⠔⠘⡐⠆⢀⠲⠧⠆⠓⠂⠜⠐⠤⡈⠼⠵⢇⣐⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠂⠰⠐⠀⠀⠀⠀⠀⠠⡂⠆⠠⠐⠾⠂⠀⢀⠐⠀⠰⠂⠂⠂⠐⠀⠐⠆⠰⠀⠀⠐⠘⠻⢆⣀⠀⎥
+⎣⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠨⠀⠁⠀⠀⠀⠀⠈⠐⠐⠀⠂⠀⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠱⣦⎦</code></pre><p>Now the nonzero entries of <code>Z</code> directly give you the corresponding entries of <code>inv(A)</code>.</p><pre><code class="language-julia hljs">A_inv[42, 172], Z[42, 172]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(0.6254934620417878, 0.6254934620414534)</code></pre><h2 id="Supernodal-setting"><a class="docs-heading-anchor" href="#Supernodal-setting">Supernodal setting</a><a id="Supernodal-setting-1"></a><a class="docs-heading-anchor-permalink" href="#Supernodal-setting" title="Permalink"></a></h2><p>Now, let&#39;s tackle the bigger of the two matrices.</p><pre><code class="language-julia hljs">B</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">525825×525825 SparseMatrixCSC{Float64, Int64} with 3674625 stored entries:
 ⎡⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠐⠦⣔⡦⣤⣤⣄⣀⡻⠿⢷⣒⣙⠛⠛⠛⎤
 ⎢⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⢦⡀⠀⠐⠲⠤⣄⣀⠀⠀⠀⠀⠀⠀⠐⠦⣄⡉⠉⠛⠛⠛⠃⠀⠀⠀⠈⠉⠙⠒⎥
 ⎢⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠈⠉⠓⠲⠤⣄⣀⠀⠀⠀⠉⠓⠦⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⎥
@@ -238,4 +238,4 @@ sparse(Z)</code></pre><pre class="documenter-example-output"><code class="nohigh
 ⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣯⎥
 ⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⎥
 ⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⎥
-⎣⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⢿⣿⢿⣿⣿⣿⣿⣿⣿⣿⢿⣿⢿⣿⣿⣿⣿⡿⣿⢿⣿⠿⣿⣿⣿⎦</code></pre><h2 id="Conclusion"><a class="docs-heading-anchor" href="#Conclusion">Conclusion</a><a id="Conclusion-1"></a><a class="docs-heading-anchor-permalink" href="#Conclusion" title="Permalink"></a></h2><p>SelectedInversion.jl lets you compute the selected inverse of a sparse symmetric positive definite matrix efficiently. Where applicable, it makes use of supernodal factorizations and thus scales to matrices with more than a million columns.</p><p>As of now, it does not support unsymmetric matrices and does not explicitly make use of parallelization along the elimination tree. If you&#39;re interested in helping develop these features, feel free to open an issue or a pull request on GitHub.</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../../supernodal_matrix/">SupernodalMatrix »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Tuesday 15 July 2025 15:24">Tuesday 15 July 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+⎣⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⢿⣿⢿⣿⣿⣿⣿⣿⣿⣿⢿⣿⢿⣿⣿⣿⣿⡿⣿⢿⣿⠿⣿⣿⣿⎦</code></pre><h2 id="Conclusion"><a class="docs-heading-anchor" href="#Conclusion">Conclusion</a><a id="Conclusion-1"></a><a class="docs-heading-anchor-permalink" href="#Conclusion" title="Permalink"></a></h2><p>SelectedInversion.jl lets you compute the selected inverse of a sparse symmetric positive definite matrix efficiently. Where applicable, it makes use of supernodal factorizations and thus scales to matrices with more than a million columns.</p><p>As of now, it does not support unsymmetric matrices and does not explicitly make use of parallelization along the elimination tree. If you&#39;re interested in helping develop these features, feel free to open an issue or a pull request on GitHub.</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../../supernodal_matrix/">SupernodalMatrix »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Tuesday 15 July 2025 16:58">Tuesday 15 July 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
