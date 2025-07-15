@@ -1,7 +1,8 @@
 using SelectedInversion
 using SparseArrays
+using Test
 
-export check_selinv
+export check_selinv, check_sparsity_pattern
 
 function check_selinv(A_inv_approx::SupernodalMatrix, A_inv::AbstractMatrix)
     if size(A_inv_approx) != size(A_inv)
@@ -40,4 +41,12 @@ function check_selinv(A_inv_approx::SparseMatrixCSC, A_inv::AbstractMatrix)
         end
     end
     return true
+end
+
+function check_sparsity_pattern(A::SparseMatrixCSC, B::SparseMatrixCSC)
+    I_A, J_A, _ = findnz(A)
+    I_B, J_B, _ = findnz(B)
+    set_A = Set(zip(I_A, J_A))
+    set_B = Set(zip(I_B, J_B))
+    @test issubset(set_B, set_A)
 end

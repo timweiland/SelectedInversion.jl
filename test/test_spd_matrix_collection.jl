@@ -31,7 +31,8 @@ EXCLUDE_MATS = ["plat362"]
         A⁻¹ = inv(Array(A))
         C = cholesky(A)
 
-        if Bool(unsafe_load(pointer(C)).is_super)
+        is_super = Bool(unsafe_load(pointer(C)).is_super)
+        if is_super
             has_supernodal = true
         else
             has_simplicial = true
@@ -48,6 +49,17 @@ EXCLUDE_MATS = ["plat362"]
         end
         Z_ldl = selinv(ldl(A); depermute = true)[1]
         @test check_selinv(Z_ldl, A⁻¹)
+
+        # For simplicial factorizations, check that sparsity pattern is correct
+        if !is_super
+            GT = sparse(C.L) .!== 0.
+            GT = GT + GT'
+            p_inv = invperm(C.p)
+            GT = GT[p_inv, p_inv]
+            check_sparsity_pattern(Z, GT)
+            check_sparsity_pattern(Z_ldlt, GT)
+            check_sparsity_pattern(Z_ldl, GT)
+        end
 
         # Test selinv_diag correctness
         d_true = diag(A⁻¹)

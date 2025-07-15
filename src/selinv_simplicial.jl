@@ -50,7 +50,7 @@ function selinv_simplicial(F::SparseArrays.CHOLMOD.Factor; depermute = false)
     if depermute
         # Symmetric(Z)[invperm(p), invperm(p)], but much faster
         # ... at the cost of more memory
-        rows, cols, vals = findnz(sparse(Symmetric(Z)))
+        rows, cols, vals = findnz(sparse(Symmetric(Z, :L)))
         p_rows, p_cols = p[rows], p[cols]
         new_rows = [p_rows; p_cols]
         new_cols = [p_cols; p_rows]
