@@ -21,7 +21,7 @@ SSMC = ssmc_db()
 
 function get_suitesparse_spd()
     SPD_mats = SSMC[
-        (SSMC.numerical_symmetry.==1).&(SSMC.positive_definite.==true).&(SSMC.real.==true).&(SSMC.name.∈Ref(
+        (SSMC.numerical_symmetry .== 1) .& (SSMC.positive_definite .== true) .& (SSMC.real .== true) .& (SSMC.name .∈ Ref(
             SPD_mats_names,
         )),
         :,

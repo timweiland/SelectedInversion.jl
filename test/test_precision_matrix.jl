@@ -9,11 +9,11 @@ using Random
     N = size(Q, 2)
 
     Q_cho = cholesky(Q)
-    Z = selinv(Q_cho; depermute=true).Z
+    Z = selinv(Q_cho; depermute = true).Z
     d = diag(Z)
 
     # The diagonal corresponds to the marginal variances, which must be positive
-    @test all(d .> 0.)
+    @test all(d .> 0.0)
 
     rng = MersenneTwister(9453778)
     N_test = 30
@@ -21,7 +21,7 @@ using Random
 
     for idx in test_idcs
         e = zeros(N)
-        e[idx] = 1.
+        e[idx] = 1.0
         ground_truth = dot(e, Q_cho \ e)
         @test d[idx] ≈ ground_truth atol=1e-7
     end
