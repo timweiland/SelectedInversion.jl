@@ -5,6 +5,7 @@ using Aqua
 include("utils.jl")
 include("test_precision_matrix.jl")
 include("test_spd_matrix_collection.jl")
+include("test_ldlt_support.jl")
 
 @testset "SelectedInversion.jl" begin
     @testset "Code quality (Aqua.jl)" begin
