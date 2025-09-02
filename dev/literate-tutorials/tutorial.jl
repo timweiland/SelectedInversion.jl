@@ -14,7 +14,7 @@ using MatrixMarket, SuiteSparseMatrixCollection
 
 mat_names = ["494_bus", "parabolic_fem"]
 ssmc = ssmc_db()
-mats_df = ssmc[ssmc.name.∈Ref(mat_names), :]
+mats_df = ssmc[ssmc.name .∈ Ref(mat_names), :]
 paths = fetch_ssmc(mats_df, format = "MM")
 paths = [joinpath(path, "$(mats_df.name[i]).mtx") for (i, path) in enumerate(paths)]
 A = MatrixMarket.mmread(paths[1]) # 494_bus
@@ -109,7 +109,7 @@ d
 # This is equivalent to `diag(selinv(A; depermute=true))` but more efficient,
 # especially for simplicial factorizations.
 # Let's verify they give the same result:
-d_full = diag(selinv(A; depermute=true)[1])
+d_full = diag(selinv(A; depermute = true)[1])
 d ≈ d_full
 
 # You can also pass pre-computed factorizations:
@@ -117,7 +117,7 @@ d_from_chol = selinv_diag(C)
 d_from_chol
 
 # And control the permutation behavior:
-d_permuted = selinv_diag(A; depermute=false)
+d_permuted = selinv_diag(A; depermute = false)
 d_permuted
 
 # It's also possible to convert `Z` into a sparse matrix.
