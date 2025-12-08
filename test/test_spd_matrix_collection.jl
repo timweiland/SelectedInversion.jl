@@ -13,9 +13,11 @@ EXCLUDE_MATS = ["plat362"]
 @testset "SPD SuiteSparse matrices" begin
     ssmc = ssmc_db()
     SPD_mats_tiny = ssmc[
-        (ssmc.numerical_symmetry .== 1) .& (ssmc.positive_definite .== true) .& (ssmc.real .== true) .& (ssmc.nrows .≤ MAX_ROWS) .& (ssmc.name .∉ Ref(
-            EXCLUDE_MATS,
-        )),
+        (ssmc.numerical_symmetry .== 1) .& (ssmc.positive_definite .== true) .& (ssmc.real .== true) .& (ssmc.nrows .≤ MAX_ROWS) .& (
+            ssmc.name .∉ Ref(
+                EXCLUDE_MATS,
+            )
+        ),
         :,
     ]
     paths = fetch_ssmc(SPD_mats_tiny, format = "MM")

@@ -8,7 +8,7 @@ include("utils.jl")
 @testset "LDLT Support" begin
     # Test the exact example from ldlt_support.org
     ρ, k = 0.95, 100  # Using smaller k for testing performance
-    A_tri = SymTridiagonal(ones(k) .+ ρ^2, -ρ * ones(k-1))
+    A_tri = SymTridiagonal(ones(k) .+ ρ^2, -ρ * ones(k - 1))
 
     @testset "SymTridiagonal Matrix Support" begin
         # These should work after implementation
@@ -64,7 +64,7 @@ include("utils.jl")
     @testset "Correctness Verification" begin
         # Test on smaller matrix for exact verification using check_selinv helper
         ρ_small, k_small = 0.5, 20
-        A_small = SymTridiagonal(ones(k_small) .+ ρ_small^2, -ρ_small * ones(k_small-1))
+        A_small = SymTridiagonal(ones(k_small) .+ ρ_small^2, -ρ_small * ones(k_small - 1))
 
         # Compute ground truth inverse
         A_inv = inv(Matrix(A_small))

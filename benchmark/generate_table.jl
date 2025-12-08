@@ -1,12 +1,12 @@
 using Measurements
 using DataFrames
 
-mean_selinv_time(name) = mean(SUITE["SelInv_spd_supernodal"][name]).time / 1e9
-std_selinv_time(name) = std(SUITE["SelInv_spd_supernodal"][name]).time / 1e9
+mean_selinv_time(name) = mean(SUITE["SelInv_spd_supernodal"][name]).time / 1.0e9
+std_selinv_time(name) = std(SUITE["SelInv_spd_supernodal"][name]).time / 1.0e9
 get_selinv_measurement(name) = measurement(mean_selinv_time(name), std_selinv_time(name))
 
-mean_cho_time(name) = mean(SUITE["Cholesky_supernodal"][name]).time / 1e9
-std_cho_time(name) = std(SUITE["Cholesky_supernodal"][name]).time / 1e9
+mean_cho_time(name) = mean(SUITE["Cholesky_supernodal"][name]).time / 1.0e9
+std_cho_time(name) = std(SUITE["Cholesky_supernodal"][name]).time / 1.0e9
 get_cho_measurement(name) = measurement(mean_cho_time(name), std_cho_time(name))
 
 function build_table()

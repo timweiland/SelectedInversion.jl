@@ -5,9 +5,9 @@ using LDLFactorizations
 using LinearAlgebra
 
 function SelectedInversion.selinv_simplicial(
-    F::LDLFactorizations.LDLFactorization;
-    depermute = false,
-)
+        F::LDLFactorizations.LDLFactorization;
+        depermute = false,
+    )
     Z = copy(F.L)
     for k in axes(Z, 2)
         Z[k, k] = 1 / F.D[k, k]

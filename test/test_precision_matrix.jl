@@ -23,6 +23,6 @@ using Random
         e = zeros(N)
         e[idx] = 1.0
         ground_truth = dot(e, Q_cho \ e)
-        @test d[idx] ≈ ground_truth atol=1e-7
+        @test d[idx] ≈ ground_truth atol = 1.0e-7
     end
 end
