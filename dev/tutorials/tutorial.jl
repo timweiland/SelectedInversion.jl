@@ -36,7 +36,7 @@ Z
 
 e5 = zeros(size(B, 2))
 e5[5] = 1.0
-(B\e5)[end], Z[end, 5]
+(B \ e5)[end], Z[end, 5]
 
 diag(Z)
 
