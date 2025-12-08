@@ -21,12 +21,14 @@ SSMC = ssmc_db()
 
 function get_suitesparse_spd()
     SPD_mats = SSMC[
-        (SSMC.numerical_symmetry .== 1) .& (SSMC.positive_definite .== true) .& (SSMC.real .== true) .& (SSMC.name .∈ Ref(
-            SPD_mats_names,
-        )),
+        (SSMC.numerical_symmetry .== 1) .& (SSMC.positive_definite .== true) .& (SSMC.real .== true) .& (
+            SSMC.name .∈ Ref(
+                SPD_mats_names,
+            )
+        ),
         :,
     ]
     paths = fetch_ssmc(SPD_mats, format = "MM")
     return SPD_mats.name,
-    [joinpath(path, "$(SPD_mats.name[i]).mtx") for (i, path) in enumerate(paths)]
+        [joinpath(path, "$(SPD_mats.name[i]).mtx") for (i, path) in enumerate(paths)]
 end

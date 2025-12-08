@@ -3,12 +3,13 @@ using SparseArrays
 export selinv_simplicial
 
 function LL_simplicial_to_LDL!(L::SparseMatrixCSC)
-    for j = 1:size(L, 2)
+    for j in 1:size(L, 2)
         L_j = @view(L.nzval[nzrange(L, j)])
         L_jj = L_j[1]
         L_j ./= L_jj
         L_j[1] = (1 / L_jj^2)
     end
+    return
 end
 
 function update_col!(Y_buf, Z, k)
@@ -18,17 +19,17 @@ function update_col!(Y_buf, Z, k)
     Zk = @view(Z.nzval[nzrng])
     Y_buf_local = @view(Y_buf[1:nnz])
     fill!(Y_buf_local, 0.0)
-    @inbounds for j = 1:nnz
+    @inbounds for j in 1:nnz
         j_row = row_rng[j]
         Y_buf_local[j] += Z[j_row, j_row] * Zk[j]
-        @inbounds for i = (j+1):nnz
+        @inbounds for i in (j + 1):nnz
             i_row = row_rng[i]
             Y_buf_local[i] += Z[i_row, j_row] * Zk[j]
             Y_buf_local[j] += Z[i_row, j_row] * Zk[i]
         end
     end
     Z[k, k] += dot(Y_buf_local, Zk)
-    copyto!(Zk, -Y_buf_local)
+    return copyto!(Zk, -Y_buf_local)
 end
 
 function selinv_simplicial(F::SparseArrays.CHOLMOD.Factor; depermute = false)
@@ -66,7 +67,8 @@ end
 function _selinv_simplicial_Z!(Z::SparseMatrixCSC)
     N = size(Z, 2)
     Y_buf = zeros(N - 1)
-    for j = (N-1):-1:1
+    for j in (N - 1):-1:1
         update_col!(Y_buf, Z, j)
     end
+    return
 end

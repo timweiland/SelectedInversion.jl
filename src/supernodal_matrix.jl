@@ -44,7 +44,7 @@ strengths of sparse and dense matrices.
 - `depermuted_access::Bool`: Whether to apply an inverse permutation before
                              accessing entries.
 """
-struct SupernodalMatrix <: AbstractArray{Float64,2}
+struct SupernodalMatrix <: AbstractArray{Float64, 2}
     N::Int
     M::Int
     n_super::Int
@@ -61,25 +61,25 @@ struct SupernodalMatrix <: AbstractArray{Float64,2}
     depermuted_access::Bool
 
     function SupernodalMatrix(
-        N,
-        M,
-        super_to_col,
-        super_to_vals,
-        super_to_rows,
-        vals,
-        rows,
-        max_super_rows,
-        invperm;
-        transpose_chunks = false,
-        symmetric_access = false,
-        depermuted_access = false,
-    )
+            N,
+            M,
+            super_to_col,
+            super_to_vals,
+            super_to_rows,
+            vals,
+            rows,
+            max_super_rows,
+            invperm;
+            transpose_chunks = false,
+            symmetric_access = false,
+            depermuted_access = false,
+        )
         n_super = length(super_to_col) - 1
 
         col_to_super = Vector{Int}(undef, M)
         cur_start = 1
-        for s = 1:n_super
-            cur_stop = super_to_col[s+1]
+        for s in 1:n_super
+            cur_stop = super_to_col[s + 1]
             col_to_super[cur_start:cur_stop] .= s
             cur_start = cur_stop + 1
         end
@@ -120,11 +120,11 @@ Construct a `SupernodalMatrix` from a supernodal Cholesky factorization.
 Keyword arguments are explained in the `SupernodalMatrix` docstring.
 """
 function SupernodalMatrix(
-    F::SparseArrays.CHOLMOD.Factor;
-    transpose_chunks = false,
-    symmetric_access = false,
-    depermuted_access = false,
-)
+        F::SparseArrays.CHOLMOD.Factor;
+        transpose_chunks = false,
+        symmetric_access = false,
+        depermuted_access = false,
+    )
     s = unsafe_load(pointer(F))
     if !Bool(s.is_super)
         throw(ArgumentError("Expected supernodal Cholesky decomposition."))
@@ -165,7 +165,7 @@ Base.IndexStyle(::Type{<:SupernodalMatrix}) = IndexCartesian()
 Get the range of indices of supernode `sup_idx` into `S.vals`.
 """
 function val_range(S::SupernodalMatrix, sup_idx::Int)
-    return (S.super_to_vals[sup_idx]+1):(S.super_to_vals[sup_idx+1])
+    return (S.super_to_vals[sup_idx] + 1):(S.super_to_vals[sup_idx + 1])
 end
 
 """
@@ -174,7 +174,7 @@ end
 Get the range of columns of supernode `sup_idx`.
 """
 function col_range(S::SupernodalMatrix, sup_idx::Int)
-    return (S.super_to_col[sup_idx]+1):S.super_to_col[sup_idx+1]
+    return (S.super_to_col[sup_idx] + 1):S.super_to_col[sup_idx + 1]
 end
 
 """
@@ -186,7 +186,7 @@ function get_max_sup_size(S::SupernodalMatrix)
     if S.n_super == 1
         return length(col_range(S, 1))
     end
-    return maximum(diff(S.super_to_col)[1:(end-1)])
+    return maximum(diff(S.super_to_col)[1:(end - 1)])
 end
 
 """
@@ -200,7 +200,7 @@ function get_chunk(S::SupernodalMatrix, sup_idx::Int)
     vals_rng = val_range(S, sup_idx)
     chunk = @view(S.vals[vals_rng])
     N_cols = length(col_rng)
-    rows_rng = (S.super_to_rows[sup_idx]+1):S.super_to_rows[sup_idx+1]
+    rows_rng = (S.super_to_rows[sup_idx] + 1):S.super_to_rows[sup_idx + 1]
     N_rows = length(rows_rng)
     if S.transposed_chunks
         return reshape(chunk, (N_cols, N_rows))
@@ -210,14 +210,15 @@ function get_chunk(S::SupernodalMatrix, sup_idx::Int)
 end
 
 function _transpose_chunks!(vals_arr, super_to_vals, super_to_col)
-    for sup_idx = 1:(length(super_to_vals)-1)
+    for sup_idx in 1:(length(super_to_vals) - 1)
         rng_start = super_to_vals[sup_idx] + 1
-        rng_stop = super_to_vals[sup_idx+1]
-        N_cols = super_to_col[sup_idx+1] - super_to_col[sup_idx]
+        rng_stop = super_to_vals[sup_idx + 1]
+        N_cols = super_to_col[sup_idx + 1] - super_to_col[sup_idx]
         N_rows = (rng_stop - rng_start + 1) ÷ N_cols
         chunk = reshape(vals_arr[rng_start:rng_stop], (N_rows, N_cols))
         copyto!(@view(vals_arr[rng_start:rng_stop]), vec(chunk'))
     end
+    return
 end
 
 """
@@ -227,7 +228,7 @@ Get the row indices corresponding to supernode `sup_idx`.
 CAREFUL: These are zero-indexed!
 """
 function get_rows(S::SupernodalMatrix, sup_idx::Int)
-    rows_rng = (S.super_to_rows[sup_idx]+1):S.super_to_rows[sup_idx+1]
+    rows_rng = (S.super_to_rows[sup_idx] + 1):S.super_to_rows[sup_idx + 1]
     return @view(S.rows[rows_rng])
 end
 
@@ -249,7 +250,7 @@ CAREFUL: These are zero-indexed!
 """
 function get_Sj(S::SupernodalMatrix, sup_idx::Int)
     col_rng = col_range(S, sup_idx)
-    return get_rows(S, sup_idx)[(length(col_rng)+1):end]
+    return get_rows(S, sup_idx)[(length(col_rng) + 1):end]
 end
 
 """
@@ -268,7 +269,7 @@ function partition_Sj(S::SupernodalMatrix, Sj)
     last_row = 0
 
     for row in Sj
-        sup = S.col_to_super[row+1]
+        sup = S.col_to_super[row + 1]
 
         if cur_sup === nothing
             cur_sup = sup
@@ -286,7 +287,7 @@ function partition_Sj(S::SupernodalMatrix, Sj)
     return blocks
 end
 
-function Base.getindex(S::SupernodalMatrix, I::Vararg{Int,2})
+function Base.getindex(S::SupernodalMatrix, I::Vararg{Int, 2})
     i, j = I
     if S.depermuted_access
         i, j = S.invperm[[i, j]]
@@ -352,7 +353,7 @@ function get_split_chunk(S::SupernodalMatrix, sup_idx::Int)
 end
 
 function LL_to_LDL!(S::SupernodalMatrix)
-    for j = 1:S.n_super
+    for j in 1:S.n_super
         diag, off_diag = get_split_chunk(S, j)
         if S.transposed_chunks
             if j < S.n_super
@@ -368,6 +369,7 @@ function LL_to_LDL!(S::SupernodalMatrix)
             diag .= Symmetric(diag' * diag)
         end
     end
+    return
 end
 
 function sparse(S::SupernodalMatrix)
@@ -375,7 +377,7 @@ function sparse(S::SupernodalMatrix)
     Is = Int64[]
     Js = Int64[]
 
-    for sup_idx = 1:S.n_super
+    for sup_idx in 1:S.n_super
         col_rng = col_range(S, sup_idx)
         rows = get_rows(S, sup_idx) .+ 1
         if S.transposed_chunks
@@ -405,7 +407,7 @@ end
 function diag(S::SupernodalMatrix)
     res = zeros(minimum(size(S)))
     cur_chunk_start = 1
-    for sup_idx = 1:S.n_super
+    for sup_idx in 1:S.n_super
         cur_diag = diag(get_split_chunk(S, sup_idx)[1])
         cur_rng = range(start = cur_chunk_start, length = length(cur_diag))
         copyto!(@view(res[cur_rng]), cur_diag)

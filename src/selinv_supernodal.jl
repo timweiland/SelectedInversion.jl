@@ -11,13 +11,14 @@ function build_indmap(Sj_blocks, indmap)
             i += 1
         end
     end
+    return
 end
 
 function compute_Y(Y_buf, Z, off_diag_chunk, Sj_blocks, indmap)
     fill!(Y_buf, 0.0)
     build_indmap(Sj_blocks, indmap)
     n_j = length(Sj_blocks)
-    @inbounds for j = 1:n_j
+    @inbounds for j in 1:n_j
         block_j = Sj_blocks[j]
         first_col_j = block_j[1] + 1
         K = Z.col_to_super[first_col_j]
@@ -36,7 +37,7 @@ function compute_Y(Y_buf, Z, off_diag_chunk, Sj_blocks, indmap)
 
         Y_R₁ = @view(Y_buf[:, R₁])
         mul!(Y_R₁, L_Ij_j_T, Z_jj, 1, 1)
-        @inbounds for i = (j+1):n_j
+        @inbounds for i in (j + 1):n_j
             block_i = Sj_blocks[i]
 
             while true
@@ -59,7 +60,7 @@ function compute_Y(Y_buf, Z, off_diag_chunk, Sj_blocks, indmap)
             mul!(Y_R₁, L_Ii_j_T, Z_ij_T', 1, 1)
         end
     end
-    fill!(indmap, 0)
+    return fill!(indmap, 0)
 end
 
 function selinv_supernodal(F::SparseArrays.CHOLMOD.Factor; depermute = false)
@@ -75,7 +76,7 @@ function selinv_supernodal(F::SparseArrays.CHOLMOD.Factor; depermute = false)
     Y_T_buf = zeros(max_sup_size, Z.max_super_rows)
     indmap = zeros(Int, size(Z, 1))
 
-    for sup_idx = (Z.n_super-1):-1:1
+    for sup_idx in (Z.n_super - 1):-1:1
         Sj = get_Sj(Z, sup_idx)
         Sj_blocks = partition_Sj(Z, Sj)
 

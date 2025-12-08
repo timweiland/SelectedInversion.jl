@@ -23,17 +23,17 @@ function selinv(F::LDLt; depermute = false)
     # Convert LDL^T to LL^T format for existing algorithm
     # Copy L factor as sparse matrix and modify diagonal to be 1/D[k,k]
     Z = sparse(F.L)
-    
+
     for k in axes(Z, 2)
         Z[k, k] = 1 / F.D[k, k]
     end
-    
-    # Use existing simplicial algorithm 
+
+    # Use existing simplicial algorithm
     _selinv_simplicial_Z!(Z)
-    
+
     # No permutation for basic LDLt (identity permutation)
     p = collect(1:size(Z, 1))
-    
+
     if depermute
         return (Z = Symmetric(Z, :L), p = p)
     else
@@ -56,22 +56,22 @@ Leverages precomputed D and L factors to skip the forward pass entirely.
 # Returns
 A vector containing the diagonal entries of the selected inverse.
 """
-function selinv_diag(F::LDLt{T, SymTridiagonal{T, Vector{T}}}; depermute = true) where T
+function selinv_diag(F::LDLt{T, SymTridiagonal{T, Vector{T}}}; depermute = true) where {T}
     n = size(F, 1)
-    
+
     # Extract precomputed factors - no forward pass needed!
     mod_diag = diag(F.D)  # This is our computed mod_diag from Kalman approach
-    
+
     # Backward pass: compute diagonal of inverse (Kalman smoother-like)
     inv_diag = similar(mod_diag)
     inv_diag[n] = 1 / mod_diag[n]
-    
-    @inbounds for i in (n-1):-1:1
+
+    @inbounds for i in (n - 1):-1:1
         # F.L[i+1, i] is exactly e[i] / mod_diag[i], so L[i+1, i]^2 = (e[i] / mod_diag[i])^2
-        l_elem = F.L[i+1, i]
-        inv_diag[i] = 1 / mod_diag[i] + (l_elem^2) * inv_diag[i+1]
+        l_elem = F.L[i + 1, i]
+        inv_diag[i] = 1 / mod_diag[i] + (l_elem^2) * inv_diag[i + 1]
     end
-    
+
     return inv_diag
 end
 
@@ -99,25 +99,25 @@ function selinv_diag(A::SymTridiagonal; depermute = true)
     n = size(A, 1)
     d = A.dv  # diagonal elements
     e = A.ev  # off-diagonal elements
-    
+
     # Forward pass: compute modified diagonal elements (Kalman filter-like)
     # This corresponds to computing the diagonal of the Cholesky factor
     mod_diag = similar(d)
     mod_diag[1] = d[1]
-    
+
     @inbounds for i in 2:n
-        mod_diag[i] = d[i] - e[i-1]^2 / mod_diag[i-1]
+        mod_diag[i] = d[i] - e[i - 1]^2 / mod_diag[i - 1]
     end
-    
+
     # Backward pass: compute diagonal of inverse (Kalman smoother-like)
     # This efficiently computes the diagonal of A^{-1} using the forward pass results
     inv_diag = similar(d)
     inv_diag[n] = 1 / mod_diag[n]
-    
-    @inbounds for i in (n-1):-1:1
-        inv_diag[i] = 1 / mod_diag[i] + (e[i]^2 / mod_diag[i]^2) * inv_diag[i+1]
+
+    @inbounds for i in (n - 1):-1:1
+        inv_diag[i] = 1 / mod_diag[i] + (e[i]^2 / mod_diag[i]^2) * inv_diag[i + 1]
     end
-    
+
     return inv_diag
 end
 

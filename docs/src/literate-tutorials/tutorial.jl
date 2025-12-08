@@ -91,14 +91,14 @@ Z
 # Let's check the value of some arbitrary entry.
 e5 = zeros(size(B, 2))
 e5[5] = 1.0
-(B\e5)[end], Z[end, 5]
+(B \ e5)[end], Z[end, 5]
 
 # The diagonal might be particularly relevant to some applications:
 diag(Z)
 
 # ## Computing Only the Diagonal
 # For many applications, you only need the diagonal entries of the inverse matrix.
-# For example, in Gaussian Markov Random Fields, the diagonal of the inverse 
+# For example, in Gaussian Markov Random Fields, the diagonal of the inverse
 # precision matrix gives the marginal variances.
 #
 # Instead of computing the full selected inverse and then extracting the diagonal,
