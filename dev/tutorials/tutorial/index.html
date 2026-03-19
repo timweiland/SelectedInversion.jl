@@ -70,7 +70,7 @@ Z</code></pre><pre class="documenter-example-output"><code class="nohighlight hl
  0.000455513  0.167124     0.166584     …  0.178322     0.178251
  0.000455513  0.167124     0.166584        0.178322     0.178251
  0.000455513  0.167124     0.166584        0.182867     0.173707
- 0.000455513  0.167124     0.166584        0.173707     0.182867</code></pre><p>Compare the values of <code>Z</code> and <code>A_inv</code> at some arbitrary index. They&#39;re not going to match:</p><pre><code class="language-julia hljs">A_inv[42, 172], Z[42, 172]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(0.6254934620417878, 0.0)</code></pre><p>But if we permute Z first, they do match:</p><pre><code class="language-julia hljs">A_inv[42, 172], Z[invperm(p), invperm(p)][42, 172]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(0.6254934620417878, 0.6254934620414534)</code></pre><p>If your use case calls for this kind of depermuted access, you can make life easier with the <code>depermute</code> keyword:</p><pre><code class="language-julia hljs">Z, _ = selinv(A; depermute = true)
+ 0.000455513  0.167124     0.166584        0.173707     0.182867</code></pre><p>Compare the values of <code>Z</code> and <code>A_inv</code> at some arbitrary index. They&#39;re not going to match:</p><pre><code class="language-julia hljs">A_inv[42, 172], Z[42, 172]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(0.6254934620419055, 0.0)</code></pre><p>But if we permute Z first, they do match:</p><pre><code class="language-julia hljs">A_inv[42, 172], Z[invperm(p), invperm(p)][42, 172]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(0.6254934620419055, 0.6254934620414535)</code></pre><p>If your use case calls for this kind of depermuted access, you can make life easier with the <code>depermute</code> keyword:</p><pre><code class="language-julia hljs">Z, _ = selinv(A; depermute = true)
 Z</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">494×494 SparseMatrixCSC{Float64, Int64} with 2334 stored entries:
 ⎡⢟⣵⡀⡈⠡⠀⠀⠀⢁⠊⠀⡀⠊⣂⡄⠁⠘⠈⡀⢀⠀⠨⣃⠀⠀⠁⢀⢀⠀⠐⠀⠀⢠⢔⠚⠄⠀⠀⠀⠀⎤
 ⎢⡀⠨⠑⣤⠀⠐⠨⠀⡁⠀⠀⠡⡈⢈⡑⠊⡀⠰⠄⠂⡀⡄⠠⣀⠈⠁⡄⠀⠀⠀⠂⠀⠄⠤⠁⠑⠀⠀⠀⠀⎥
@@ -91,7 +91,7 @@ Z</code></pre><pre class="documenter-example-output"><code class="nohighlight hl
 ⎢⢀⢖⠀⡅⢂⣁⣀⣀⢀⡀⠀⠀⠈⡌⡂⡁⠈⢀⡃⡁⣘⣐⡂⢀⠐⣈⡀⣀⣉⡀⢂⠐⠑⣤⣂⡌⠀⠀⠀⠀⎥
 ⎢⠚⠄⢅⠀⡀⢵⢸⠁⠂⠐⠄⠐⡂⠃⠂⠂⠐⡴⠠⠔⠘⡐⠆⢀⠲⠧⠆⠓⠂⠜⠐⠤⡈⠼⠵⢇⣐⠀⠀⠀⎥
 ⎢⠀⠀⠀⠀⠂⠰⠐⠀⠀⠀⠀⠀⠠⡂⠆⠠⠐⠾⠂⠀⢀⠐⠀⠰⠂⠂⠂⠐⠀⠐⠆⠰⠀⠀⠐⠘⠻⢆⣀⠀⎥
-⎣⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠨⠀⠁⠀⠀⠀⠀⠈⠐⠐⠀⠂⠀⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠱⣦⎦</code></pre><p>Now the nonzero entries of <code>Z</code> directly give you the corresponding entries of <code>inv(A)</code>.</p><pre><code class="language-julia hljs">A_inv[42, 172], Z[42, 172]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(0.6254934620417878, 0.6254934620414534)</code></pre><h2 id="Supernodal-setting"><a class="docs-heading-anchor" href="#Supernodal-setting">Supernodal setting</a><a id="Supernodal-setting-1"></a><a class="docs-heading-anchor-permalink" href="#Supernodal-setting" title="Permalink"></a></h2><p>Now, let&#39;s tackle the bigger of the two matrices.</p><pre><code class="language-julia hljs">B</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">525825×525825 SparseMatrixCSC{Float64, Int64} with 3674625 stored entries:
+⎣⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠨⠀⠁⠀⠀⠀⠀⠈⠐⠐⠀⠂⠀⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠱⣦⎦</code></pre><p>Now the nonzero entries of <code>Z</code> directly give you the corresponding entries of <code>inv(A)</code>.</p><pre><code class="language-julia hljs">A_inv[42, 172], Z[42, 172]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(0.6254934620419055, 0.6254934620414535)</code></pre><h2 id="Supernodal-setting"><a class="docs-heading-anchor" href="#Supernodal-setting">Supernodal setting</a><a id="Supernodal-setting-1"></a><a class="docs-heading-anchor-permalink" href="#Supernodal-setting" title="Permalink"></a></h2><p>Now, let&#39;s tackle the bigger of the two matrices.</p><pre><code class="language-julia hljs">B</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">525825×525825 SparseMatrixCSC{Float64, Int64} with 3674625 stored entries:
 ⎡⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠐⠦⣔⡦⣤⣤⣄⣀⡻⠿⢷⣒⣙⠛⠛⠛⎤
 ⎢⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⢦⡀⠀⠐⠲⠤⣄⣀⠀⠀⠀⠀⠀⠀⠐⠦⣄⡉⠉⠛⠛⠛⠃⠀⠀⠀⠈⠉⠙⠒⎥
 ⎢⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠈⠉⠓⠲⠤⣄⣀⠀⠀⠀⠉⠓⠦⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⎥
@@ -141,27 +141,27 @@ Z</code></pre><pre class="documenter-example-output"><code class="nohighlight hl
   0.0      0.0      0.0      0.0         0.0      0.0     21.7203  14.4534
   0.0      0.0      0.0      0.0         0.0      0.0     14.4534  21.7203</code></pre><p><code>Z</code> is now a <code>SupernodalMatrix</code>, which is a custom type defined in SelectedInversion.jl.</p><p>It&#39;s a subtype of <code>AbstractMatrix</code>, so you can index into it as you would expect. Let&#39;s check the value of some arbitrary entry.</p><pre><code class="language-julia hljs">e5 = zeros(size(B, 2))
 e5[5] = 1.0
-(B \ e5)[end], Z[end, 5]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(16.720493403782914, 16.720493403782914)</code></pre><p>The diagonal might be particularly relevant to some applications:</p><pre><code class="language-julia hljs">diag(Z)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">525825-element Vector{Float64}:
- 43.428594188883665
- 21.720312275144835
- 43.42757082606359
- 43.428594188881206
- 21.720312275144153
- 43.427570826064326
- 21.80839920565951
- 11.017148901424683
- 21.89769199236264
- 10.954514208803067
+(B \ e5)[end], Z[end, 5]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(16.720493403783042, 16.720493403783042)</code></pre><p>The diagonal might be particularly relevant to some applications:</p><pre><code class="language-julia hljs">diag(Z)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">525825-element Vector{Float64}:
+ 43.428594188884425
+ 21.720312275144977
+ 43.427570826063466
+ 43.42859418888127
+ 21.720312275144288
+ 43.42757082606461
+ 21.80839920565974
+ 11.017148901424864
+ 21.897691992363015
+ 10.954514208803161
   ⋮
- 21.720464508486053
- 21.720430681825867
- 21.720401136624524
- 21.72037585161697
- 21.720354808609045
- 21.720337992459946
- 21.72032539107257
- 21.720316995382163
- 21.720312799349735</code></pre><h2 id="Computing-Only-the-Diagonal"><a class="docs-heading-anchor" href="#Computing-Only-the-Diagonal">Computing Only the Diagonal</a><a id="Computing-Only-the-Diagonal-1"></a><a class="docs-heading-anchor-permalink" href="#Computing-Only-the-Diagonal" title="Permalink"></a></h2><p>For many applications, you only need the diagonal entries of the inverse matrix. For example, in Gaussian Markov Random Fields, the diagonal of the inverse precision matrix gives the marginal variances.</p><p>Instead of computing the full selected inverse and then extracting the diagonal, you can use <code>selinv_diag</code> for better performance:</p><pre><code class="language-julia hljs">d = selinv_diag(A)
+ 21.720464508486103
+ 21.720430681825917
+ 21.720401136624577
+ 21.720375851617028
+ 21.720354808609095
+ 21.72033799246
+ 21.72032539107264
+ 21.720316995382262
+ 21.72031279934986</code></pre><h2 id="Computing-Only-the-Diagonal"><a class="docs-heading-anchor" href="#Computing-Only-the-Diagonal">Computing Only the Diagonal</a><a id="Computing-Only-the-Diagonal-1"></a><a class="docs-heading-anchor-permalink" href="#Computing-Only-the-Diagonal" title="Permalink"></a></h2><p>For many applications, you only need the diagonal entries of the inverse matrix. For example, in Gaussian Markov Random Fields, the diagonal of the inverse precision matrix gives the marginal variances.</p><p>Instead of computing the full selected inverse and then extracting the diagonal, you can use <code>selinv_diag</code> for better performance:</p><pre><code class="language-julia hljs">d = selinv_diag(A)
 d</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">494-element SparseVector{Float64, Int64} with 494 stored entries:
   [1  ]  =  0.000454823
   [2  ]  =  0.359149
@@ -181,26 +181,26 @@ d</code></pre><pre class="documenter-example-output"><code class="nohighlight hl
   [494]  =  0.182867</code></pre><p>This is equivalent to <code>diag(selinv(A; depermute=true))</code> but more efficient, especially for simplicial factorizations. Let&#39;s verify they give the same result:</p><pre><code class="language-julia hljs">d_full = diag(selinv(A; depermute = true)[1])
 d ≈ d_full</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true</code></pre><p>You can also pass pre-computed factorizations:</p><pre><code class="language-julia hljs">d_from_chol = selinv_diag(C)
 d_from_chol</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">525825-element Vector{Float64}:
- 43.428594188883665
- 21.720312275144835
- 43.42757082606359
- 43.428594188881206
- 21.720312275144153
- 43.427570826064326
- 21.80839920565951
- 11.017148901424683
- 21.89769199236264
- 10.954514208803067
+ 43.428594188884425
+ 21.720312275144977
+ 43.427570826063466
+ 43.42859418888127
+ 21.720312275144288
+ 43.42757082606461
+ 21.80839920565974
+ 11.017148901424864
+ 21.897691992363015
+ 10.954514208803161
   ⋮
- 21.720464508486053
- 21.720430681825867
- 21.720401136624524
- 21.72037585161697
- 21.720354808609045
- 21.720337992459946
- 21.72032539107257
- 21.720316995382163
- 21.720312799349735</code></pre><p>And control the permutation behavior:</p><pre><code class="language-julia hljs">d_permuted = selinv_diag(A; depermute = false)
+ 21.720464508486103
+ 21.720430681825917
+ 21.720401136624577
+ 21.720375851617028
+ 21.720354808609095
+ 21.72033799246
+ 21.72032539107264
+ 21.720316995382262
+ 21.72031279934986</code></pre><p>And control the permutation behavior:</p><pre><code class="language-julia hljs">d_permuted = selinv_diag(A; depermute = false)
 d_permuted</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">494-element SparseVector{Float64, Int64} with 494 stored entries:
   [1  ]  =  0.571508
   [2  ]  =  0.555408
@@ -238,4 +238,4 @@ sparse(Z)</code></pre><pre class="documenter-example-output"><code class="nohigh
 ⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣯⎥
 ⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⎥
 ⎢⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⎥
-⎣⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⢿⣿⢿⣿⣿⣿⣿⣿⣿⣿⢿⣿⢿⣿⣿⣿⣿⡿⣿⢿⣿⠿⣿⣿⣿⎦</code></pre><h2 id="Conclusion"><a class="docs-heading-anchor" href="#Conclusion">Conclusion</a><a id="Conclusion-1"></a><a class="docs-heading-anchor-permalink" href="#Conclusion" title="Permalink"></a></h2><p>SelectedInversion.jl lets you compute the selected inverse of a sparse symmetric positive definite matrix efficiently. Where applicable, it makes use of supernodal factorizations and thus scales to matrices with more than a million columns.</p><p>As of now, it does not support unsymmetric matrices and does not explicitly make use of parallelization along the elimination tree. If you&#39;re interested in helping develop these features, feel free to open an issue or a pull request on GitHub.</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../../supernodal_matrix/">SupernodalMatrix »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Monday 8 December 2025 16:04">Monday 8 December 2025</span>. Using Julia version 1.12.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+⎣⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⢿⣿⢿⣿⣿⣿⣿⣿⣿⣿⢿⣿⢿⣿⣿⣿⣿⡿⣿⢿⣿⠿⣿⣿⣿⎦</code></pre><h2 id="Conclusion"><a class="docs-heading-anchor" href="#Conclusion">Conclusion</a><a id="Conclusion-1"></a><a class="docs-heading-anchor-permalink" href="#Conclusion" title="Permalink"></a></h2><p>SelectedInversion.jl lets you compute the selected inverse of a sparse symmetric positive definite matrix efficiently. Where applicable, it makes use of supernodal factorizations and thus scales to matrices with more than a million columns.</p><p>As of now, it does not support unsymmetric matrices and does not explicitly make use of parallelization along the elimination tree. If you&#39;re interested in helping develop these features, feel free to open an issue or a pull request on GitHub.</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../../supernodal_matrix/">SupernodalMatrix »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 19 March 2026 23:45">Thursday 19 March 2026</span>. Using Julia version 1.12.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
