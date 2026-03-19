@@ -32,8 +32,3 @@ partition_Sj
 get_chunk
 get_split_chunk
 ```
-
-## Linear algebra
-```@docs
-LinearAlgebra.dot(::SupernodalMatrix, ::SparseMatrixCSC)
-```
