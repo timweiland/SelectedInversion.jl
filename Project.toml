@@ -1,7 +1,7 @@
 name = "SelectedInversion"
 uuid = "043bf095-3f01-458a-9f1c-8cf4448fe908"
 authors = ["Tim Weiland <hello@timwei.land> and contributors"]
-version = "0.1.7"
+version = "0.1.8"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -19,8 +19,8 @@ Aqua = "0.8"
 JLD = "0.13"
 LDLFactorizations = "0.10"
 LinearAlgebra = "<0.0.1, 1"
-PrecompileTools = "1"
 MatrixMarket = "0.5"
+PrecompileTools = "1"
 Random = "<0.0.1, 1"
 SparseArrays = "<0.0.1, 1"
 SuiteSparseMatrixCollection = "0.5"
