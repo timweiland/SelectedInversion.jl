@@ -14,6 +14,7 @@ include("generate_literate.jl")
 
 makedocs(;
     modules = [SelectedInversion],
+    checkdocs = :exports,
     authors = "Tim Weiland <hello@timwei.land> and contributors",
     sitename = "SelectedInversion.jl",
     format = Documenter.HTML(;
