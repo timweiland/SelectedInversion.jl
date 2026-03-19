@@ -1,7 +1,7 @@
 import Base: size, IndexStyle, getindex
 using SparseArrays
 import SparseArrays: sparse
-import LinearAlgebra: diag
+import LinearAlgebra: diag, dot
 
 export SupernodalMatrix
 export val_range, col_range, get_rows, get_row_col_idcs, get_max_sup_size
@@ -418,3 +418,121 @@ function diag(S::SupernodalMatrix)
     end
     return res
 end
+
+"""
+    dot(S::SupernodalMatrix, B::SparseMatrixCSC)
+
+Compute the Frobenius inner product `sum(S .* B)` efficiently by iterating over
+supernodal chunks and merge-intersecting with the sparse column structure of `B`.
+
+When `S.symmetric_access` is true, the off-diagonal blocks are stored only in
+the lower triangle, so the symmetric counterpart contributions are added in a
+second pass.
+"""
+function dot(S::SupernodalMatrix, B::SparseMatrixCSC)
+    if S.depermuted_access
+        p = invperm(S.invperm)
+        B = B[p, p]
+    end
+
+    rv = rowvals(B)
+    nz = nonzeros(B)
+    result = 0.0
+    vals = S.vals
+
+    # Pass 1: dot over stored entries via merge-intersect per column
+    @inbounds for s in 1:S.n_super
+        rows = get_rows(S, s)  # zero-indexed
+        n_rows = length(rows)
+        cols = col_range(S, s)
+        n_cols = length(cols)
+        vals_base = S.super_to_vals[s]
+
+        for (c_local, j) in enumerate(cols)
+            ia = nzrange(B, j)
+            ia_start = first(ia)
+            ia_stop = last(ia)
+            r_ptr = 1
+            b_ptr = ia_start
+
+            # Pre-compute base offset for this column into vals
+            if S.transposed_chunks
+                # chunk layout: (n_cols, n_rows), chunk[c_local, r_ptr]
+                # val_idx = vals_base + (r_ptr - 1) * n_cols + c_local
+                col_offset = vals_base + c_local
+                stride = n_cols
+            else
+                # chunk layout: (n_rows, n_cols), chunk[r_ptr, c_local]
+                # val_idx = vals_base + (c_local - 1) * n_rows + r_ptr
+                col_offset = vals_base + (c_local - 1) * n_rows
+                stride = 1
+            end
+
+            while r_ptr <= n_rows && b_ptr <= ia_stop
+                s_row = rows[r_ptr] + 1
+                b_row = rv[b_ptr]
+
+                if s_row < b_row
+                    r_ptr += 1
+                elseif s_row > b_row
+                    b_ptr += 1
+                else
+                    if S.transposed_chunks
+                        val_idx = col_offset + (r_ptr - 1) * stride
+                    else
+                        val_idx = col_offset + r_ptr
+                    end
+                    result += vals[val_idx] * nz[b_ptr]
+                    r_ptr += 1
+                    b_ptr += 1
+                end
+            end
+        end
+    end
+
+    # Pass 2: symmetric off-diagonal contributions
+    # For each stored off-diagonal entry S[i,j] (i > j), the symmetric
+    # counterpart S[j,i] = S[i,j] contributes S[i,j] * B[j,i].
+    # We iterate over off-diagonal rows i as columns of B, searching for
+    # the supernode's column range in B's column i.
+    if S.symmetric_access
+        @inbounds for s in 1:S.n_super
+            rows = get_rows(S, s)  # zero-indexed
+            n_rows = length(rows)
+            cols = col_range(S, s)
+            n_cols = length(cols)
+            col_start = first(cols)
+            col_end = last(cols)
+            vals_base = S.super_to_vals[s]
+
+            for r_idx in (n_cols + 1):n_rows
+                i = rows[r_idx] + 1  # off-diagonal row, 1-indexed
+                bi_range = nzrange(B, i)
+                bi_start = first(bi_range)
+                bi_stop = last(bi_range)
+                bi_start > bi_stop && continue
+
+                # Find entries in column i of B with row in [col_start, col_end]
+                lo = searchsortedfirst(rv, col_start, bi_start, bi_stop, Base.Order.Forward)
+                lo > bi_stop && continue
+
+                for b_ptr in lo:bi_stop
+                    j = rv[b_ptr]
+                    j > col_end && break
+
+                    c_local = j - col_start + 1
+                    if S.transposed_chunks
+                        val_idx = vals_base + (r_idx - 1) * n_cols + c_local
+                    else
+                        val_idx = vals_base + (c_local - 1) * n_rows + r_idx
+                    end
+                    result += vals[val_idx] * nz[b_ptr]
+                end
+            end
+        end
+    end
+
+    return result
+end
+
+dot(B::SparseMatrixCSC, S::SupernodalMatrix) = dot(S, B)
