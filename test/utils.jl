@@ -16,7 +16,7 @@ function check_selinv(A_inv_approx::SupernodalMatrix, A_inv::AbstractMatrix)
         chunk_row_idcs, chunk_col_idcs = get_row_col_idcs(A_inv_approx, sup_idx)
 
         gt = A_inv[chunk_row_idcs, chunk_col_idcs]
-        if A_inv_approx.transposed_chunks
+        if SelectedInversion.is_transposed(A_inv_approx)
             gt = gt'
         end
 
