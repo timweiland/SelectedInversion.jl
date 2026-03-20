@@ -177,7 +177,20 @@ function selinv_supernodal(F::SparseArrays.CHOLMOD.Factor; depermute = false)
         symmetric_access = true,
         depermuted_access = depermute,
     )
-    LL_to_LDL!(Z)
+    # Inlined LL_to_LDL for type stability (avoids Union{Nothing, SubArray})
+    GC.@preserve Z for j in 1:Z.n_super
+        vals_rng = val_range(Z, j)
+        n_cols = Z.super_to_col[j + 1] - Z.super_to_col[j]
+        n_rows = Z.super_to_rows[j + 1] - Z.super_to_rows[j]
+        chunk = reshape(@view(Z.vals[vals_rng]), (n_cols, n_rows))
+        diag = @view(chunk[:, 1:n_cols])
+        if j < Z.n_super
+            off_diag = @view(chunk[:, (n_cols + 1):n_rows])
+            LinearAlgebra.LAPACK.trtrs!('U', 'N', 'N', diag, off_diag)
+        end
+        LinearAlgebra.LAPACK.potri!('U', diag)
+        diag .= Symmetric(diag, :U)
+    end
 
     max_sup_size = get_max_sup_size(Z)
     Y_T_buf = zeros(max_sup_size, Z.max_super_rows)
