@@ -170,6 +170,27 @@ function compute_Y_scattered!(Y_buf, Z, off_diag_chunk, Sj_blocks, n_blocks, ind
     return
 end
 
+@inline function _selinv_supernode!(Z, sup_idx, sup_size, n_Sj,
+        blocks_buf, n_blocks, Y_T_buf, M_buf, indmap)
+    vals_start = Z.super_to_vals[sup_idx] + 1
+    n_rows = Z.super_to_rows[sup_idx + 1] - Z.super_to_rows[sup_idx]
+    n_vals = sup_size * n_rows
+    chunk = reshape(@view(Z.vals[vals_start:(vals_start + n_vals - 1)]), (sup_size, n_rows))
+    Z_jj = @view(chunk[:, 1:sup_size])
+    Z_Sj_j_T = @view(chunk[:, (sup_size + 1):n_rows])
+
+    Y = @view(Y_T_buf[1:sup_size, 1:n_Sj])
+    M = @view(M_buf[1:n_Sj, 1:n_Sj])
+    gather_update_matrix!(M, Z, blocks_buf, n_blocks, indmap)
+    BLAS.symm!('R', 'L', 1.0, M, Z_Sj_j_T, 0.0, Y)
+
+    BLAS.syr2k!('U', 'N', 0.5, Y, Z_Sj_j_T, 1.0, Z_jj)
+    Z_jj .= Symmetric(Z_jj, :U)
+
+    Z_Sj_j_T .= -Y
+    return nothing
+end
+
 function selinv_supernodal(F::SparseArrays.CHOLMOD.Factor; depermute = false)
     Z = SupernodalMatrix(
         F;
@@ -201,29 +222,10 @@ function selinv_supernodal(F::SparseArrays.CHOLMOD.Factor; depermute = false)
     GC.@preserve Z for sup_idx in (Z.n_super - 1):-1:1
         Sj = get_Sj(Z, sup_idx)
         n_blocks = partition_Sj!(blocks_buf, Z, Sj)
-
-        vals_rng = val_range(Z, sup_idx)
-        sup_size = Z.super_to_col[sup_idx + 1] - Z.super_to_col[sup_idx]
-        n_rows = Z.super_to_rows[sup_idx + 1] - Z.super_to_rows[sup_idx]
-        chunk = reshape(@view(Z.vals[vals_rng]), (sup_size, n_rows))
-        Z_jj = @view(chunk[:, 1:sup_size])
-        Z_Sj_j_T = @view(chunk[:, (sup_size + 1):n_rows])
         n_Sj = length(Sj)
-
-        Y = @view(Y_T_buf[1:sup_size, 1:n_Sj])
-
-        if n_blocks >= GATHER_MIN_BLOCKS
-            M = @view(M_buf[1:n_Sj, 1:n_Sj])
-            gather_update_matrix!(M, Z, blocks_buf, n_blocks, indmap)
-            BLAS.symm!('R', 'L', 1.0, M, Z_Sj_j_T, 0.0, Y)
-        else
-            compute_Y_scattered!(Y, Z, Z_Sj_j_T, blocks_buf, n_blocks, indmap)
-        end
-
-        BLAS.syr2k!('U', 'N', 0.5, Y, Z_Sj_j_T, 1.0, Z_jj)
-        Z_jj .= Symmetric(Z_jj, :U)
-
-        Z_Sj_j_T .= -Y
+        sup_size = Z.super_to_col[sup_idx + 1] - Z.super_to_col[sup_idx]
+        _selinv_supernode!(Z, sup_idx, sup_size, n_Sj,
+            blocks_buf, n_blocks, Y_T_buf, M_buf, indmap)
     end
 
     return (Z = Z, p = F.p)
