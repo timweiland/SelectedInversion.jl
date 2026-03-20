@@ -132,6 +132,40 @@ function partition_Sj!(blocks_buf, S::SupernodalMatrix, Sj)
     return n_blocks
 end
 
+# Zero-alloc version: partition directly from Z.rows using offset + length
+function _partition_Sj_direct!(blocks_buf, Z::SupernodalMatrix, sup_idx)
+    sup_size = Z.super_to_col[sup_idx + 1] - Z.super_to_col[sup_idx]
+    rows_start = Z.super_to_rows[sup_idx] + 1
+    rows_end = Z.super_to_rows[sup_idx + 1]
+    sj_start = rows_start + sup_size  # skip diagonal block rows
+    n_Sj = rows_end - sj_start + 1
+    n_Sj == 0 && return 0, 0
+
+    rows = Z.rows
+    n_blocks = 0
+    block_start = rows[sj_start]
+    block_end = block_start
+    cur_sup = Z.col_to_super[block_start + 1]
+
+    @inbounds for idx in (sj_start + 1):rows_end
+        row = rows[idx]
+        sup = Z.col_to_super[row + 1]
+
+        if sup == cur_sup && row == block_end + 1
+            block_end = row
+        else
+            n_blocks += 1
+            blocks_buf[n_blocks] = block_start:block_end
+            cur_sup = sup
+            block_start = row
+            block_end = row
+        end
+    end
+    n_blocks += 1
+    blocks_buf[n_blocks] = block_start:block_end
+    return n_blocks, n_Sj
+end
+
 function gather_update_matrix!(M, Z, Sj_blocks, n_blocks, indmap)
     build_indmap(Sj_blocks, n_blocks, indmap)
     vals = Z.vals
@@ -227,12 +261,11 @@ function selinv_supernodal(F::SparseArrays.CHOLMOD.Factor; depermute = false)
 
         # Backward sweep
         for sup_idx in (Z.n_super - 1):-1:1
-            Sj = get_Sj(Z, sup_idx)
-            n_blocks = partition_Sj!(blocks_buf, Z, Sj)
+            n_blocks, n_Sj = _partition_Sj_direct!(blocks_buf, Z, sup_idx)
+            n_Sj == 0 && continue
 
             offset = Z.super_to_vals[sup_idx]  # 0-indexed
             sup_size = Z.super_to_col[sup_idx + 1] - Z.super_to_col[sup_idx]
-            n_Sj = length(Sj)
 
             pZ_jj = pvals + offset * sizeof(Float64)
             pZ_off = pZ_jj + sup_size * sup_size * sizeof(Float64)
