@@ -103,7 +103,7 @@ d_permuted = selinv_diag(A; depermute=false)  # diagonal of permuted inverse
 
 ## Performance
 
-**tl;dr**: It's pretty fast.
+**tl;dr**: A selected inversion costs about as much as a CHOLMOD-based Cholesky factorization.
 
 Below is the performance of SelectedInversion.jl on some example problems from
 the [SuiteSparse matrix collection](http://sparse.tamu.edu).
@@ -115,19 +115,19 @@ as well as the different factorization algorithm (we use CHOLMOD).
 
 | **Problem**<br>`String` | **N**<br>`Int64` | **NNZ**<br>`Int64` | **Factorization time (sec)**<br>`Measurement{Float64}` | **SelInv time (sec)**<br>`Measurement{Float64}` |
 |------------------------:|-----------------:|-------------------:|-------------------------------------------------------:|------------------------------------------------:|
-| bcsstk14                | 1806             | 63454              | 0.00334±0.00036                                        | 0.00327±0.00052                                 |
-| bcsstk24                | 3562             | 159910             | 0.0068±0.0013                                          | 0.00699±0.00098                                 |
-| bcsstk28                | 4410             | 219024             | 0.0092±0.0013                                          | 0.00852±0.00082                                 |
-| bcsstk18                | 11948            | 149090             | 0.0201±0.0019                                          | 0.0313±0.0032                                   |
-| bodyy6                  | 19366            | 134208             | 0.0186±0.002                                           | 0.0351±0.0023                                   |
-| crystm03                | 24696            | 583770             | 0.076±0.014                                            | 0.157±0.015                                     |
-| wathen120               | 36441            | 565761             | 0.0473±0.0021                                          | 0.0696±0.0067                                   |
-| shipsec1                | 140874           | 3568176            | 1.043±0.018                                            | 1.774±0.083                                     |
-| pwtk                    | 217918           | 11524432           | 1.144±0.044                                            | 1.881±0.032                                     |
-| parabolic\_fem          | 525825           | 3674625            | 1.04±0.26                                              | 5.25458±NaN                                     |
-| tmt\_sym                | 726713           | 5080961            | 1.7±0.11                                               | 7.34492±NaN                                     |
-| ecology2                | 999999           | 4995991            | 1.35±0.17                                              | 12.1524±NaN                                     |
-| G3\_circuit             | 1585478          | 7660826            | 4.15±0.5                                               | 48.0917±NaN                                     |
+| bcsstk14                | 1806             | 63454              | 0.004±0.004                                            | 0.0023±0.0016                                   |
+| bcsstk24                | 3562             | 159910             | 0.007±0.0013                                           | 0.0051±0.0011                                   |
+| bcsstk28                | 4410             | 219024             | 0.00896±0.00082                                        | 0.0062±0.0013                                   |
+| bcsstk18                | 11948            | 149090             | 0.027±0.013                                            | 0.0176±0.0024                                   |
+| bodyy6                  | 19366            | 134208             | 0.0184±0.0035                                          | 0.0191±0.0022                                   |
+| crystm03                | 24696            | 583770             | 0.08±0.02                                              | 0.103±0.017                                     |
+| wathen120               | 36441            | 565761             | 0.0479±0.0047                                          | 0.0409±0.0029                                   |
+| shipsec1                | 140874           | 3568176            | 1.107±0.065                                            | 1.144±0.063                                     |
+| pwtk                    | 217918           | 11524432           | 1.332±0.07                                             | 1.292±0.03                                      |
+| parabolic\_fem          | 525825           | 3674625            | 1.071±0.035                                            | 1.042±0.047                                     |
+| tmt\_sym                | 726713           | 5080961            | 1.372±0.036                                            | 1.165±0.084                                     |
+| ecology2                | 999999           | 4995991            | 1.282±0.099                                            | 1.385±0.044                                     |
+| G3\_circuit             | 1585478          | 7660826            | 4.97±0.74                                              | 6.58833±NaN                                     |
 
 ## Contributing
 
