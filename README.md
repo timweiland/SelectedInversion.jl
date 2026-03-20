@@ -1,3 +1,11 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/src/assets/logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/src/assets/logo.svg">
+    <img alt="SelectedInversion.jl logo" src="docs/src/assets/logo.svg" width="170">
+  </picture>
+</p>
+
 <h1 align="center">
     SelectedInversion.jl
 </h1>
