@@ -99,40 +99,8 @@ function clear_indmap!(Sj_blocks, n_blocks, indmap)
     return
 end
 
-"""
-    partition_Sj!(blocks_buf, S, Sj) -> Int
-
-Non-allocating version of `partition_Sj`. Writes blocks into `blocks_buf`
-and returns the number of blocks.
-"""
-function partition_Sj!(blocks_buf, S::SupernodalMatrix, Sj)
-    length(Sj) == 0 && return 0
-
-    n_blocks = 0
-    block_start = Sj[1]
-    block_end = Sj[1]
-    cur_sup = S.col_to_super[Sj[1] + 1]
-
-    @inbounds for idx in 2:length(Sj)
-        row = Sj[idx]
-        sup = S.col_to_super[row + 1]
-
-        if sup == cur_sup && row == block_end + 1
-            block_end = row
-        else
-            n_blocks += 1
-            blocks_buf[n_blocks] = block_start:block_end
-            cur_sup = sup
-            block_start = row
-            block_end = row
-        end
-    end
-    n_blocks += 1
-    blocks_buf[n_blocks] = block_start:block_end
-    return n_blocks
-end
-
-# Zero-alloc version: partition directly from Z.rows using offset + length
+# Partition separator rows into contiguous blocks within the same supernode.
+# Works directly with Z.rows using offset arithmetic (zero allocations).
 function _partition_Sj_direct!(blocks_buf, Z::SupernodalMatrix, sup_idx)
     sup_size = Z.super_to_col[sup_idx + 1] - Z.super_to_col[sup_idx]
     rows_start = Z.super_to_rows[sup_idx] + 1
