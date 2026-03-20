@@ -327,17 +327,11 @@ function get_split_chunk(S::SupernodalMatrix{Tr}, sup_idx::Int) where {Tr}
     if Tr
         N_col = size(chunk, 1)
         diag_block = @view(chunk[:, 1:N_col])
-        if sup_idx == S.n_super
-            return diag_block, nothing
-        end
-        off_diag_block = @view(chunk[:, (N_col + 1):end])
+        off_diag_block = @view(chunk[:, (N_col + 1):size(chunk, 2)])
     else
         N_col = size(chunk, 2)
         diag_block = @view(chunk[1:N_col, :])
-        if sup_idx == S.n_super
-            return diag_block, nothing
-        end
-        off_diag_block = @view(chunk[(N_col + 1):end, :])
+        off_diag_block = @view(chunk[(N_col + 1):size(chunk, 1), :])
     end
     return diag_block, off_diag_block
 end
