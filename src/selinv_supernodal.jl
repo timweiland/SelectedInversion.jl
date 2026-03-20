@@ -177,7 +177,7 @@ function selinv_supernodal(F::SparseArrays.CHOLMOD.Factor; depermute = false)
         symmetric_access = true,
         depermuted_access = depermute,
     )
-    # Inlined LL_to_LDL for type stability (avoids Union{Nothing, SubArray})
+    # LL_to_LDL: forward pass for cache locality
     GC.@preserve Z for j in 1:Z.n_super
         vals_rng = val_range(Z, j)
         n_cols = Z.super_to_col[j + 1] - Z.super_to_col[j]
@@ -198,36 +198,32 @@ function selinv_supernodal(F::SparseArrays.CHOLMOD.Factor; depermute = false)
     indmap = zeros(Int, size(Z, 1))
     blocks_buf = Vector{UnitRange{Int64}}(undef, Z.max_super_rows)
 
-    GC.@preserve Z begin
-        for sup_idx in (Z.n_super - 1):-1:1
-            Sj = get_Sj(Z, sup_idx)
-            n_blocks = partition_Sj!(blocks_buf, Z, Sj)
+    GC.@preserve Z for sup_idx in (Z.n_super - 1):-1:1
+        Sj = get_Sj(Z, sup_idx)
+        n_blocks = partition_Sj!(blocks_buf, Z, Sj)
 
-            # Inline chunk access to avoid SubArray allocations
-            vals_rng = val_range(Z, sup_idx)
-            sup_size = Z.super_to_col[sup_idx + 1] - Z.super_to_col[sup_idx]
-            n_rows = Z.super_to_rows[sup_idx + 1] - Z.super_to_rows[sup_idx]
-            chunk = reshape(@view(Z.vals[vals_rng]), (sup_size, n_rows))
-            Z_jj = @view(chunk[:, 1:sup_size])
-            Z_Sj_j_T = @view(chunk[:, (sup_size + 1):n_rows])
-            n_Sj = length(Sj)
+        vals_rng = val_range(Z, sup_idx)
+        sup_size = Z.super_to_col[sup_idx + 1] - Z.super_to_col[sup_idx]
+        n_rows = Z.super_to_rows[sup_idx + 1] - Z.super_to_rows[sup_idx]
+        chunk = reshape(@view(Z.vals[vals_rng]), (sup_size, n_rows))
+        Z_jj = @view(chunk[:, 1:sup_size])
+        Z_Sj_j_T = @view(chunk[:, (sup_size + 1):n_rows])
+        n_Sj = length(Sj)
 
-            Y = @view(Y_T_buf[1:sup_size, 1:n_Sj])
+        Y = @view(Y_T_buf[1:sup_size, 1:n_Sj])
 
-            if n_blocks >= GATHER_MIN_BLOCKS
-                M = @view(M_buf[1:n_Sj, 1:n_Sj])
-                gather_update_matrix!(M, Z, blocks_buf, n_blocks, indmap)
-                BLAS.symm!('R', 'L', 1.0, M, Z_Sj_j_T, 0.0, Y)
-            else
-                compute_Y_scattered!(Y, Z, Z_Sj_j_T, blocks_buf, n_blocks, indmap)
-            end
-
-            # Z_jj += Y * off_diag' (symmetric rank-2k update, upper triangle only)
-            BLAS.syr2k!('U', 'N', 0.5, Y, Z_Sj_j_T, 1.0, Z_jj)
-            Z_jj .= Symmetric(Z_jj, :U)
-
-            Z_Sj_j_T .= -Y
+        if n_blocks >= GATHER_MIN_BLOCKS
+            M = @view(M_buf[1:n_Sj, 1:n_Sj])
+            gather_update_matrix!(M, Z, blocks_buf, n_blocks, indmap)
+            BLAS.symm!('R', 'L', 1.0, M, Z_Sj_j_T, 0.0, Y)
+        else
+            compute_Y_scattered!(Y, Z, Z_Sj_j_T, blocks_buf, n_blocks, indmap)
         end
+
+        BLAS.syr2k!('U', 'N', 0.5, Y, Z_Sj_j_T, 1.0, Z_jj)
+        Z_jj .= Symmetric(Z_jj, :U)
+
+        Z_Sj_j_T .= -Y
     end
 
     return (Z = Z, p = F.p)

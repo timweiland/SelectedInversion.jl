@@ -206,13 +206,30 @@ function get_chunk(S::SupernodalMatrix{Tr}, sup_idx::Int) where {Tr}
 end
 
 function _transpose_chunks!(vals_arr, super_to_vals, super_to_col)
+    # Find max chunk size for buffer allocation
+    max_size = 0
+    for sup_idx in 1:(length(super_to_vals) - 1)
+        chunk_size = super_to_vals[sup_idx + 1] - super_to_vals[sup_idx]
+        max_size = max(max_size, chunk_size)
+    end
+    buf = Vector{Float64}(undef, max_size)
+
     for sup_idx in 1:(length(super_to_vals) - 1)
         rng_start = super_to_vals[sup_idx] + 1
         rng_stop = super_to_vals[sup_idx + 1]
+        n = rng_stop - rng_start + 1
         N_cols = super_to_col[sup_idx + 1] - super_to_col[sup_idx]
-        N_rows = (rng_stop - rng_start + 1) ÷ N_cols
-        chunk = reshape(vals_arr[rng_start:rng_stop], (N_rows, N_cols))
-        copyto!(@view(vals_arr[rng_start:rng_stop]), vec(chunk'))
+        N_rows = n ÷ N_cols
+
+        # Copy to buffer, then write back transposed
+        copyto!(buf, 1, vals_arr, rng_start, n)
+        @inbounds for c in 1:N_cols
+            for r in 1:N_rows
+                # Source: column-major (N_rows, N_cols) at buf[(c-1)*N_rows + r]
+                # Dest: column-major (N_cols, N_rows) at vals_arr[rng_start + (r-1)*N_cols + c - 1]
+                vals_arr[rng_start + (r - 1) * N_cols + c - 1] = buf[(c - 1) * N_rows + r]
+            end
+        end
     end
     return
 end
