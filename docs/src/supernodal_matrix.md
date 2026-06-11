@@ -32,3 +32,17 @@ partition_Sj
 get_chunk
 get_split_chunk
 ```
+
+## Selected-inverse extraction
+
+Read the selected inverse at a given sparse pattern `B` straight from the
+supernodal blocks, without materializing the full `sparse(selinv(F).Z)`. For
+repeated extraction with a fixed pattern (e.g. across refactorizations of the
+same symbolic factor), precompute a plan with `selinv_extract_setup` and reuse
+it via the allocation-free `selinv_extract!(dest, S, plan)`.
+
+```@docs
+selinv_extract
+selinv_extract!
+selinv_extract_setup
+```
