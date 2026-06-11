@@ -7,6 +7,7 @@ export SupernodalMatrix
 export val_range, col_range, get_rows, get_row_col_idcs, get_max_sup_size
 export get_Sj, partition_Sj
 export get_chunk, get_split_chunk
+export selinv_extract, selinv_extract!, selinv_extract_setup
 
 """
     SupernodalMatrix{Tr, Sym, Dep}
@@ -528,3 +529,258 @@ function dot(S::SupernodalMatrix{Tr, Sym, Dep}, B::SparseMatrixCSC) where {Tr, S
 end
 
 dot(B::SparseMatrixCSC, S::SupernodalMatrix) = dot(S, B)
+
+# ── Selected-inverse extraction at a sparse pattern ──────────────────────────
+#
+# `selinv_extract` is the *read* analogue of `dot(S, B)`: the same supernodal
+# block traversal, but instead of accumulating `tr(S B)`, it stores `S`'s value
+# at each nonzero position of `B`. This avoids materializing the full
+# `sparse(S)` when a downstream consumer only needs `S` on a small pattern.
+
+"""
+    _zeros_like_pattern(B::SparseMatrixCSC)
+
+Allocate a `SparseMatrixCSC` sharing `B`'s exact sparsity pattern
+(`colptr`/`rowval`) with an all-zero `Float64` value array.
+"""
+function _zeros_like_pattern(B::SparseMatrixCSC)
+    return SparseMatrixCSC(
+        B.m, B.n, copy(B.colptr), copy(rowvals(B)), zeros(Float64, nnz(B)),
+    )
+end
+
+"""
+    _selinv_extract_src!(src, S, Bp)
+
+Fill `src` so that, for the `k`-th stored nonzero of `Bp` (in `Bp`'s CSC order),
+`src[k]` is the 1-based index into `S.vals` holding `S[i, j]`, or `0` when
+`(i, j)` lies outside `S`'s stored selected-inverse pattern. `Bp` must already be
+in `S`'s internal (permuted) frame. This is the index-recording twin of the
+`dot(S, B)` traversal.
+"""
+function _selinv_extract_src!(
+        src::Vector{Int}, S::SupernodalMatrix{Tr, Sym, Dep}, Bp::SparseMatrixCSC,
+    ) where {Tr, Sym, Dep}
+    fill!(src, 0)
+    rv = rowvals(Bp)
+
+    # Pass 1: stored (lower-triangle) blocks — merge-intersect S's rows with
+    # B's column j.
+    @inbounds for s in 1:S.n_super
+        rows = get_rows(S, s)  # zero-indexed
+        n_rows = length(rows)
+        cols = col_range(S, s)
+        n_cols = length(cols)
+        vals_base = S.super_to_vals[s]
+
+        for (c_local, j) in enumerate(cols)
+            ia = nzrange(Bp, j)
+            ia_stop = last(ia)
+            r_ptr = 1
+            b_ptr = first(ia)
+
+            if Tr
+                col_offset = vals_base + c_local
+                stride = n_cols
+            else
+                col_offset = vals_base + (c_local - 1) * n_rows
+                stride = 1
+            end
+
+            while r_ptr <= n_rows && b_ptr <= ia_stop
+                s_row = rows[r_ptr] + 1
+                b_row = rv[b_ptr]
+
+                if s_row < b_row
+                    r_ptr += 1
+                elseif s_row > b_row
+                    b_ptr += 1
+                else
+                    if Tr
+                        src[b_ptr] = col_offset + (r_ptr - 1) * stride
+                    else
+                        src[b_ptr] = col_offset + r_ptr
+                    end
+                    r_ptr += 1
+                    b_ptr += 1
+                end
+            end
+        end
+    end
+
+    # Pass 2: symmetric off-diagonal entries (upper triangle of B).
+    if Sym
+        @inbounds for s in 1:S.n_super
+            rows = get_rows(S, s)  # zero-indexed
+            n_rows = length(rows)
+            cols = col_range(S, s)
+            n_cols = length(cols)
+            col_start = first(cols)
+            col_end = last(cols)
+            vals_base = S.super_to_vals[s]
+
+            for r_idx in (n_cols + 1):n_rows
+                i = rows[r_idx] + 1  # off-diagonal row, 1-indexed
+                bi_range = nzrange(Bp, i)
+                bi_start = first(bi_range)
+                bi_stop = last(bi_range)
+                bi_start > bi_stop && continue
+
+                lo = searchsortedfirst(rv, col_start, bi_start, bi_stop, Base.Order.Forward)
+                lo > bi_stop && continue
+
+                for b_ptr in lo:bi_stop
+                    j = rv[b_ptr]
+                    j > col_end && break
+
+                    c_local = j - col_start + 1
+                    if Tr
+                        src[b_ptr] = vals_base + (r_idx - 1) * n_cols + c_local
+                    else
+                        src[b_ptr] = vals_base + (c_local - 1) * n_rows + r_idx
+                    end
+                end
+            end
+        end
+    end
+
+    return src
+end
+
+"""
+    selinv_extract_setup(S::SupernodalMatrix, B::SparseMatrixCSC)
+
+Precompute a reuse `plan::Vector{Int}` for streaming `S`'s values onto `B`'s
+pattern.
+
+`plan` has one entry per structural nonzero of `B` (in `B`'s original-frame CSC
+order): `plan[t]` is the 1-based index into `S.vals` that supplies that entry,
+or `0` when the entry lies outside `S`'s stored selected-inverse pattern (so it
+reads as `0.0`). Any depermutation is baked into `plan`, so the in-place fill
+needs no permutation at call time.
+
+The supernodal structure is invariant across refactorizations of the same
+symbolic factor (only `S.vals` changes), so a `plan` built once can be reused by
+`selinv_extract!(dest, S, plan)` for every later refactorization with zero
+allocation. `dest` must carry `B`'s pattern (e.g. `selinv_extract(S, B)` or a
+copy of `B`) so that its nonzero order matches `plan`.
+"""
+function selinv_extract_setup(
+        S::SupernodalMatrix{Tr, Sym, Dep}, B::SparseMatrixCSC,
+    ) where {Tr, Sym, Dep}
+    Bp = Dep ? B[invperm(S.invperm), invperm(S.invperm)] : B
+    src = _selinv_extract_src!(zeros(Int, nnz(Bp)), S, Bp)
+
+    if Dep
+        # `src` is indexed in the permuted frame. Map it back to B's original
+        # frame by tagging each permuted nonzero with its index and permuting
+        # the tags back (tags are all nonzero, so no structural entry is lost).
+        tag = SparseMatrixCSC(
+            Bp.m, Bp.n, copy(Bp.colptr), copy(rowvals(Bp)), collect(1:nnz(Bp)),
+        )
+        tag = tag[S.invperm, S.invperm]
+        return src[nonzeros(tag)]
+    else
+        return src
+    end
+end
+
+"""
+    selinv_extract!(dest::SparseMatrixCSC, S::SupernodalMatrix, plan::Vector{Int})
+
+Fill `dest.nzval` from `S.vals` using a `plan` from [`selinv_extract_setup`](@ref).
+`dest` must carry the same pattern (and nonzero order) as the `B` used to build
+`plan`. This is `O(nnz(dest))` and allocation-free, so it can be reused across
+refactorizations of the same symbolic factor.
+"""
+function selinv_extract!(dest::SparseMatrixCSC, S::SupernodalMatrix, plan::Vector{Int})
+    nz = nonzeros(dest)
+    length(nz) == length(plan) || throw(
+        DimensionMismatch(
+            "dest has $(length(nz)) nonzeros but plan has $(length(plan)) entries",
+        ),
+    )
+    vals = S.vals
+    @inbounds for t in eachindex(nz)
+        k = plan[t]
+        nz[t] = iszero(k) ? 0.0 : vals[k]
+    end
+    return dest
+end
+
+"""
+    selinv_extract(S::SupernodalMatrix, B::SparseMatrixCSC)
+
+Return a `SparseMatrixCSC` with exactly `B`'s sparsity pattern whose values are
+`S`'s selected-inverse values at those positions. Equivalent to `sparse(S)`
+masked to `B`'s pattern, but computed without materializing `sparse(S)`.
+
+Positions of `B` that fall outside `S`'s stored selected-inverse pattern (the
+Cholesky-factor fill) are retained with value `0.0`, so the result's pattern is
+identical to `B`'s. `B` is assumed to have sorted row indices (the standard
+`SparseMatrixCSC` invariant).
+
+For repeated extraction with a fixed pattern across refactorizations, cache a
+plan with [`selinv_extract_setup`](@ref) and use the allocation-free
+`selinv_extract!(dest, S, plan)`.
+"""
+function selinv_extract(
+        S::SupernodalMatrix{Tr, Sym, Dep}, B::SparseMatrixCSC,
+    ) where {Tr, Sym, Dep}
+    Bp = Dep ? B[invperm(S.invperm), invperm(S.invperm)] : B
+    src = _selinv_extract_src!(zeros(Int, nnz(Bp)), S, Bp)
+    vals = S.vals
+    out = Vector{Float64}(undef, length(src))
+    @inbounds for t in eachindex(src)
+        k = src[t]
+        out[t] = iszero(k) ? 0.0 : vals[k]
+    end
+    Zp = SparseMatrixCSC(Bp.m, Bp.n, copy(Bp.colptr), copy(rowvals(Bp)), out)
+    return Dep ? Zp[S.invperm, S.invperm] : Zp
+end
+
+"""
+    selinv_extract!(dest::SparseMatrixCSC, S::SupernodalMatrix, B::SparseMatrixCSC)
+
+Fill `dest.nzval` with `S`'s values at `B`'s pattern. `dest` must already carry
+`B`'s pattern (same `colptr`/`rowval`). For repeated extraction with a fixed
+pattern, cache a plan via [`selinv_extract_setup`](@ref) and use the `plan`
+method instead.
+"""
+function selinv_extract!(dest::SparseMatrixCSC, S::SupernodalMatrix, B::SparseMatrixCSC)
+    copyto!(nonzeros(dest), nonzeros(selinv_extract(S, B)))
+    return dest
+end
+
+"""
+    selinv_extract!(dest::SparseMatrixCSC, Z::AbstractMatrix, B::SparseMatrixCSC)
+
+Generic fallback used for *simplicial* selected inverses, where `selinv(F).Z` is
+a `Symmetric{<:Any, <:SparseMatrixCSC}` (or a plain `SparseMatrixCSC` when
+depermuted) rather than a `SupernodalMatrix`. Reads `Z[i, j]` at `B`'s pattern
+via ordinary indexing. `dest` must carry `B`'s pattern.
+"""
+function selinv_extract!(dest::SparseMatrixCSC, Z::AbstractMatrix, B::SparseMatrixCSC)
+    (dest.m, dest.n) == (B.m, B.n) || throw(
+        DimensionMismatch("dest and B must have the same size"),
+    )
+    rv = rowvals(B)
+    nzd = nonzeros(dest)
+    @inbounds for j in 1:B.n
+        for t in nzrange(B, j)
+            nzd[t] = Z[rv[t], j]
+        end
+    end
+    return dest
+end
+
+"""
+    selinv_extract(Z::AbstractMatrix, B::SparseMatrixCSC)
+
+Generic fallback for simplicial selected inverses; see the `SupernodalMatrix`
+method for semantics. Lets callers use one interface regardless of whether the
+factor produced a supernodal or simplicial selected inverse.
+"""
+function selinv_extract(Z::AbstractMatrix, B::SparseMatrixCSC)
+    return selinv_extract!(_zeros_like_pattern(B), Z, B)
+end

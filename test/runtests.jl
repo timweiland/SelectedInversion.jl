@@ -7,6 +7,7 @@ include("test_precision_matrix.jl")
 include("test_spd_matrix_collection.jl")
 include("test_ldlt_support.jl")
 include("test_dot.jl")
+include("test_extract.jl")
 
 @testset "SelectedInversion.jl" begin
     @testset "Code quality (Aqua.jl)" begin
