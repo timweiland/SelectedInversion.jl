@@ -71,12 +71,30 @@ function selinv_diag(A; depermute = true)
     Z, p = selinv(A; depermute = false)
 
     # Extract diagonal from permuted matrix
-    d = diag(Z)
+    d = _diag(Z)
 
     # Apply inverse permutation if depermuting is requested
     if depermute
-        return d[invperm(p)]
+        # d[invperm(p)], without materializing the inverse permutation
+        d_out = similar(d)
+        d_out[p] = d
+        return d_out
     else
         return d
     end
+end
+
+_diag(Z) = diag(Z)
+
+# `diag` on a `Symmetric` sparse matrix goes through generic indexing; the
+# simplicial selected inverse stores each diagonal entry first in its column.
+function _diag(Z::Symmetric{<:Any, <:SparseMatrixCSC})
+    S = parent(Z)
+    colptr, rowval, nzval = S.colptr, S.rowval, S.nzval
+    d = Vector{eltype(S)}(undef, size(S, 2))
+    @inbounds for j in eachindex(d)
+        k = colptr[j]
+        d[j] = (k < colptr[j + 1] && rowval[k] == j) ? nzval[k] : S[j, j]
+    end
+    return d
 end
