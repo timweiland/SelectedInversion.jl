@@ -83,6 +83,9 @@ end
 # factor, the diagonal holds D and the unit diagonal of L is implicit.
 function _simplicial_factor_csc(F::SparseArrays.CHOLMOD.Factor{Tv, Ti}) where {Tv <: Real, Ti}
     s = unsafe_load(pointer(F))
+    if s.xtype == SparseArrays.CHOLMOD.CHOLMOD_PATTERN
+        throw(SparseArrays.CHOLMOD.CHOLMODException("only numeric factors are supported"))
+    end
     Bool(s.is_super) && return sparse(F.L) # Supernodal factors are always LL
     return GC.@preserve F begin
         n = Int(s.n)

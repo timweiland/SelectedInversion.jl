@@ -56,6 +56,15 @@ function check_simplicial_selinv(F, A)
 end
 
 @testset "Simplicial selected inversion" begin
+    @testset "Reject symbolic factors" begin
+        A = sparse([2.0 -1 0; -1 2 -1; 0 -1 2])
+        F = SparseArrays.CHOLMOD.analyze(SparseArrays.CHOLMOD.Sparse(A))
+        @test is_simplicial(F)
+        for f in (selinv, selinv_simplicial, selinv_diag)
+            @test_throws SparseArrays.CHOLMOD.CHOLMODException("only numeric factors are supported") f(F)
+        end
+    end
+
     problems = [
         "tree" => simplicial_tree_precision(150),
         "nested effects" => simplicial_nested_precision(12, 8),
