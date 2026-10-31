@@ -43,7 +43,7 @@ where `F = lu(A)` is a sparse UMFPACK LU factorization of a square matrix `A`.
 
 The constructor prepares the symbolic structure for the pivot sequence and factor
 pattern of `F` and the pattern of `B`. Pass the workspace to
-[`selinv!(dest, ws, F)`](@ref selinv!(::SparseMatrixCSC, ::LUSelInvWorkspace, ::SparseArrays.UMFPACK.UmfpackLU))
+[`selinv!(dest, ws, F)`](@ref selinv!)
 to compute the values, including after refactorizing `F` with `lu!`.
 
 Every stored entry of `B` is a requested position, including explicitly stored
@@ -136,7 +136,7 @@ is the transposed pattern of `L + U`.
 
 To repeat the computation for refactorizations of matrices with the same
 pattern, prepare an [`LUSelInvWorkspace`](@ref) once and call
-[`selinv!`](@ref selinv!(::SparseMatrixCSC, ::LUSelInvWorkspace, ::SparseArrays.UMFPACK.UmfpackLU)).
+[`selinv!`](@ref).
 
 # Example
 ```julia
