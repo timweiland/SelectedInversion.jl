@@ -33,7 +33,8 @@ SelectedInversion.jl directly interfaces with CHOLMOD-based Cholesky
 factorizations, which are the default for sparse symmetric positive-definite
 matrices in Julia.
 It also supports factorizations obtained from LDLFactorizations.jl through a
-package extension.
+package extension, and UMFPACK-based sparse LU factorizations for
+unsymmetric, indefinite and complex matrices.
 
 The algorithms implemented here are directly based on SelInv [1].
 The simplicial formulation is equivalent to the Takahashi recursions [2, 3].
@@ -109,6 +110,40 @@ The `selinv_diag` function supports the same `depermute` keyword as `selinv`:
 d_permuted = selinv_diag(A; depermute=false)  # diagonal of permuted inverse
 ```
 
+### Unsymmetric, Indefinite and Complex Matrices (Sparse LU)
+
+Cholesky-based selected inversion needs a symmetric positive-definite matrix.
+For any square nonsingular sparse matrix, use Julia's UMFPACK LU
+factorization and say which entries of the inverse you need:
+
+```julia
+F = lu(A)                    # UMFPACK, with row scaling and pivoting
+Z = selinv(F, B)             # inv(A) at the stored positions of B
+d = selinv_diag(F)           # diag(inv(A))
+```
+
+`Z` has exactly the sparsity pattern of `B` (explicitly stored zeros included)
+and is indexed like `A`, so `Z[i, j] == inv(A)[i, j]` for every stored
+position; there is no permutation to undo. `B = A` gives the inverse on the
+pattern of a symmetric `A`, and `B = sparse(A')` the entries needed for
+`tr(inv(A) * dA)` when `A` is unsymmetric. This works for indefinite matrices
+and for matrices with zeros on the diagonal, where an unpivoted `LDLᵀ`
+factorization breaks down.
+
+To repeat the computation after refactorizing a matrix with the same pattern,
+reuse a workspace:
+
+```julia
+ws = LUSelInvWorkspace(F, B)
+Z = float(copy(B))
+lu!(F, A_new)
+selinv!(Z, ws, F)            # prepared again only if UMFPACK changed its pivots
+```
+
+The algorithm is the scalar LU selected inversion of Jacquelin, Lin and Yang
+[4]. Only the entries of the inverse that the requested ones depend on are
+computed from the sparse factors.
+
 ## Performance
 
 **tl;dr**: A selected inversion costs about as much as a CHOLMOD-based Cholesky factorization.
@@ -148,3 +183,5 @@ Check our [contribution guidelines](./CONTRIBUTING.md).
 [2] Erisman, A. M., & Tinney, W. F. (1975). On computing certain elements of the inverse of a sparse matrix. *Communications of the ACM*, 18(3), 177-179.
 
 [3] Takahashi, K. (1973). Formation of sparse bus impedance matrix and its application to short circuit study. In *Proc. PICA Conference*, June, 1973.
+
+[4] Jacquelin, M., Lin, L., & Yang, C. (2018). PSelInv---A Distributed Memory Parallel Algorithm for Selected Inversion: The Non-symmetric Case. *Parallel Computing*, 74, 84-98. [arXiv:1708.04539](https://arxiv.org/abs/1708.04539)

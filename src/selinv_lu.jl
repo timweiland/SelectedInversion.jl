@@ -7,7 +7,7 @@
 #     A⁻¹[Q[j], P[i]] = X[j, i] * r[P[i]],
 #
 # where `r` holds the row multipliers. `X` follows from `X L = U⁻¹` and
-# `U X = L⁻¹` (scalar form of Algorithm 1 in Jacquelin, Lin & Yang, 2017,
+# `U X = L⁻¹` (scalar form of Algorithm 1 in Jacquelin, Lin & Yang, 2018,
 # https://arxiv.org/abs/1708.04539), processing k = n, …, 1:
 #
 #     X[r, k] = -Σ_{i ∈ C(k)} X[r, i] L[i, k]             (r > k)
@@ -165,8 +165,9 @@ pattern (same `colptr` and `rowval`), for example a copy of the `B` passed to
 
 `F` may be a refactorization (`lu!`) of a different matrix with the same size.
 UMFPACK may choose different pivots for different values. `selinv!` compares the
-pivot sequence and factor pattern of `F` with those `ws` was prepared for: when
-they agree, only the numeric phase runs and no memory is allocated; when they
+pivot sequence and factor pattern of `F` with those `ws` was prepared for. When
+they agree, only the numeric phase runs, and the only memory allocated is the
+temporary `O(n)` workspace UMFPACK uses while handing out its factors. When they
 differ, `ws` is prepared again for `F` (allocating) before the numeric phase.
 `ws.preparations` counts the preparations, including the initial one.
 """
