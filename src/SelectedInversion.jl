@@ -5,6 +5,7 @@ include("selinv_supernodal.jl")
 include("selinv_simplicial.jl")
 include("selinv.jl")
 include("selinv_ldlt.jl")
+include("lu_factors.jl")
 include("umfpack_factors.jl")
 include("selinv_lu.jl")
 

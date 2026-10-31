@@ -7,52 +7,12 @@
 # `Rs[i]`. The documented identity `F.L * F.U == (F.Rs .* A)[F.p, F.q]` therefore
 # fails for matrices with very small row sums. This adapter calls
 # `umfpack_*_get_numeric` directly, reading the factors in UMFPACK's native
-# layout (L by rows, U by columns) together with `do_recip`, into buffers owned
-# by the caller so that repeated reads do not allocate.
+# layout (L by rows, U by columns) together with `do_recip`, into the reusable
+# buffers of a `_LUFactors` (see `lu_factors.jl`) so that repeated reads do not
+# allocate.
 
 const _UmfpackLU = SparseArrays.UMFPACK.UmfpackLU
 const _LSS = SparseArrays.LibSuiteSparse
-
-"""
-Raw numeric factors of a square UMFPACK factorization `(R A)[P, Q] = L U`, in
-UMFPACK's native 0-based layout: `L` by rows (unit diagonal stored last in each
-row) and `U` by columns (diagonal stored last in each column). `R` is the row
-scaling, applied as multiplication by `Rs` when `do_recip` is nonzero and as
-division otherwise.
-"""
-mutable struct _UmfpackFactors{Tv, Ti}
-    n::Int
-    Lp::Vector{Ti}
-    Lj::Vector{Ti}
-    Lx::Vector{Tv}
-    Up::Vector{Ti}
-    Ui::Vector{Ti}
-    Ux::Vector{Tv}
-    P::Vector{Ti}
-    Q::Vector{Ti}
-    Rs::Vector{Float64}
-    do_recip::Base.RefValue{Ti}
-    lnz::Base.RefValue{Ti}
-    unz::Base.RefValue{Ti}
-    nrow::Base.RefValue{Ti}
-    ncol::Base.RefValue{Ti}
-    nzud::Base.RefValue{Ti}
-end
-
-function _UmfpackFactors{Tv, Ti}() where {Tv, Ti}
-    return _UmfpackFactors{Tv, Ti}(
-        0, Ti[], Ti[], Tv[], Ti[], Ti[], Tv[], Ti[], Ti[], Float64[],
-        Ref(zero(Ti)), Ref(zero(Ti)), Ref(zero(Ti)), Ref(zero(Ti)), Ref(zero(Ti)),
-        Ref(zero(Ti)),
-    )
-end
-
-function _check_lu_factorization(F::_UmfpackLU)
-    m, n = size(F)
-    m == n || throw(DimensionMismatch("selected inversion requires a square matrix, got $m×$n"))
-    issuccess(F) || throw(SingularException(0))
-    return n
-end
 
 for (Tv, Ti, lunz, getnum) in (
         (:Float64, :Int64, :umfpack_dl_get_lunz, :umfpack_dl_get_numeric),
@@ -80,7 +40,7 @@ for (Tv, Ti, lunz, getnum) in (
             )
         )
     end
-    @eval function _read_factors!(f::_UmfpackFactors{$Tv, $Ti}, F::_UmfpackLU{$Tv, $Ti})
+    @eval function _read_factors!(f::_LUFactors{$Tv, $Ti}, F::_UmfpackLU{$Tv, $Ti})
         n = _check_lu_factorization(F)
         SparseArrays.UMFPACK.umfpack_numeric!(F)
         @lock F.lock begin
@@ -102,22 +62,4 @@ for (Tv, Ti, lunz, getnum) in (
         end
         return f
     end
-end
-
-"""
-    _row_multipliers!(r, f)
-
-Write the factors by which UMFPACK multiplied each row of `A`, i.e. `r[i]` such
-that `(r .* A)[P, Q] = L U`.
-"""
-function _row_multipliers!(r::Vector{Float64}, f::_UmfpackFactors)
-    resize!(r, f.n)
-    if iszero(f.do_recip[])
-        @inbounds for i in 1:f.n
-            r[i] = inv(f.Rs[i])
-        end
-    else
-        copyto!(r, f.Rs)
-    end
-    return r
 end

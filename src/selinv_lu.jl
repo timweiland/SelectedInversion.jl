@@ -1,8 +1,10 @@
-# Selected inversion from a pivoted sparse LU factorization (UMFPACK).
+# Selected inversion from a pivoted sparse LU factorization (UMFPACK, or KLU
+# through the `SelectedInversionKLUExt` extension).
 #
-# UMFPACK factors a square matrix as `(R A)[P, Q] = L U`, with a row scaling `R`,
-# independent row and column permutations `P` and `Q`, `L` unit lower and `U`
-# upper triangular. With `M = (R A)[P, Q]` and `X = M⁻¹`,
+# The factors are read as `(R A)[P, Q] = L U` (see `lu_factors.jl`), with a row
+# scaling `R`, independent row and column permutations `P` and `Q`, `L` unit
+# lower and `U` upper triangular; KLU's block triangular form is folded into `U`
+# when it is read. With `M = (R A)[P, Q]` and `X = M⁻¹`,
 #
 #     A⁻¹[Q[j], P[i]] = X[j, i] * r[P[i]],
 #
@@ -36,15 +38,16 @@
 export LUSelInvWorkspace, selinv!
 
 """
-    LUSelInvWorkspace(F::SparseArrays.UMFPACK.UmfpackLU, B::SparseMatrixCSC)
+    LUSelInvWorkspace(F, B::SparseMatrixCSC)
 
-Workspace for computing the entries of `A⁻¹` at the stored positions of `B`,
-where `F = lu(A)` is a sparse UMFPACK LU factorization of a square matrix `A`.
+Workspace for computing the entries of `A⁻¹` at the stored positions of `B` from
+a sparse LU factorization `F` of a square matrix `A`: `F = lu(A)` (UMFPACK), or
+`F = klu(A)` (KLU, after `using KLU`).
 
 The constructor prepares the symbolic structure for the pivot sequence and factor
 pattern of `F` and the pattern of `B`. Pass the workspace to
 [`selinv!(dest, ws, F)`](@ref selinv!)
-to compute the values, including after refactorizing `F` with `lu!`.
+to compute the values, including after refactorizing `F` (`lu!` or `klu!`).
 
 Every stored entry of `B` is a requested position, including explicitly stored
 zeros; the values of `B` are ignored. `B` uses the original row and column
@@ -55,7 +58,7 @@ workspace.
 """
 mutable struct LUSelInvWorkspace{Tv, Ti}
     n::Int
-    factors::_UmfpackFactors{Tv, Ti}
+    factors::_LUFactors{Tv, Ti}
     # Factor structure the workspace was prepared for (UMFPACK layout, 0-based).
     prepared_Lp::Vector{Ti}
     prepared_Lj::Vector{Ti}
@@ -93,15 +96,16 @@ end
 
 Base.size(ws::LUSelInvWorkspace) = (ws.n, ws.n)
 
-function LUSelInvWorkspace(
-        F::_UmfpackLU{Tv, Ti}, B::SparseMatrixCSC,
-    ) where {Tv, Ti}
+LUSelInvWorkspace(F::_UmfpackLU{Tv, Ti}, B::SparseMatrixCSC) where {Tv, Ti} =
+    _lu_workspace(F, B, Tv, Ti)
+
+function _lu_workspace(F::Factorization, B::SparseMatrixCSC, ::Type{Tv}, ::Type{Ti}) where {Tv, Ti}
     n = size(F, 1)
     size(B) == size(F) || throw(
         DimensionMismatch("requested pattern has size $(size(B)), factorization has size $(size(F))"),
     )
     ws = LUSelInvWorkspace{Tv, Ti}(
-        n, _UmfpackFactors{Tv, Ti}(),
+        n, _LUFactors{Tv, Ti}(),
         Ti[], Ti[], Ti[], Ti[], Ti[], Ti[],
         Int[], Int[], Int[], Tv[],
         Int[], Int[], Int[], Tv[],
@@ -117,15 +121,18 @@ end
 
 """
     selinv(F::SparseArrays.UMFPACK.UmfpackLU, B::SparseMatrixCSC) -> SparseMatrixCSC
+    selinv(F::KLU.KLUFactorization, B::SparseMatrixCSC) -> SparseMatrixCSC
 
-Compute the entries of `A⁻¹` at the stored positions of `B`, where `F = lu(A)` is
-a sparse LU factorization of a square, nonsingular matrix `A`.
+Compute the entries of `A⁻¹` at the stored positions of `B`, where `F` is a
+sparse LU factorization of a square, nonsingular matrix `A`: `F = lu(A)`
+(UMFPACK), or `F = klu(A)` (KLU, available after `using KLU`).
 
 The result has exactly the sparsity pattern of `B` (including explicitly stored
 zeros of `B`, whose values are ignored) and is indexed like `A`: entry `(i, j)`
-of the result is `inv(A)[i, j]`. UMFPACK's row scaling and its independent row
-and column permutations are undone internally. `A` may be unsymmetric or
-indefinite, have zeros on its diagonal, and be real or complex.
+of the result is `inv(A)[i, j]`. The factorization's row scaling and its
+independent row and column permutations are undone internally, as is KLU's
+block triangular form. `A` may be unsymmetric or indefinite, have zeros on its
+diagonal, and be real or complex.
 
 Only the entries of `A⁻¹` needed to obtain the requested ones are computed, using
 the sparse factors: no dense inverse is formed and no solve is performed per
@@ -145,7 +152,9 @@ Z = selinv(F, A)           # inv(A) at the pattern of A
 Z = selinv(F, sparse(A'))  # inv(A) at the pattern of A', as in tr(inv(A) * dA)
 ```
 """
-function selinv(F::_UmfpackLU, B::SparseMatrixCSC)
+selinv(F::_UmfpackLU, B::SparseMatrixCSC) = _selinv_lu(F, B)
+
+function _selinv_lu(F::Factorization, B::SparseMatrixCSC)
     ws = LUSelInvWorkspace(F, B)
     _selinv_lu_numeric!(ws)
     dest = SparseMatrixCSC(
@@ -156,22 +165,27 @@ function selinv(F::_UmfpackLU, B::SparseMatrixCSC)
 end
 
 """
-    selinv!(dest::SparseMatrixCSC, ws::LUSelInvWorkspace, F::SparseArrays.UMFPACK.UmfpackLU) -> dest
+    selinv!(dest::SparseMatrixCSC, ws::LUSelInvWorkspace, F) -> dest
 
 Overwrite the stored values of `dest` with the entries of `inv(A)` at the
-requested pattern of `ws`, where `F = lu(A)`. `dest` must have the requested
-pattern (same `colptr` and `rowval`), for example a copy of the `B` passed to
-[`LUSelInvWorkspace`](@ref).
+requested pattern of `ws`, where `F` is a sparse LU factorization of `A`
+(`lu(A)`, or `klu(A)` after `using KLU`). `dest` must have the requested
+pattern (same `colptr` and `rowval`), for example `similar(B, eltype(F))` for
+the `B` passed to [`LUSelInvWorkspace`](@ref).
 
-`F` may be a refactorization (`lu!`) of a different matrix with the same size.
-UMFPACK may choose different pivots for different values. `selinv!` compares the
-pivot sequence and factor pattern of `F` with those `ws` was prepared for. When
-they agree, only the numeric phase runs, and the only memory allocated is the
-temporary `O(n)` workspace UMFPACK uses while handing out its factors. When they
-differ, `ws` is prepared again for `F` (allocating) before the numeric phase.
-`ws.preparations` counts the preparations, including the initial one.
+`F` may be a refactorization (`lu!`, `klu!`) of a different matrix with the same
+size. The factorization may choose different pivots for different values.
+`selinv!` compares the pivot sequence and factor pattern of `F` with those `ws`
+was prepared for. When they agree, only the numeric phase runs; for UMFPACK the
+only memory allocated is the temporary `O(n)` workspace UMFPACK uses while
+handing out its factors, while reading KLU's factors allocates copies of them.
+When they differ, `ws` is prepared again for `F` (allocating) before the
+numeric phase. `ws.preparations` counts the preparations, including the
+initial one.
 """
-function selinv!(dest::SparseMatrixCSC, ws::LUSelInvWorkspace, F::_UmfpackLU)
+selinv!(dest::SparseMatrixCSC, ws::LUSelInvWorkspace, F::_UmfpackLU) = _selinv_lu!(dest, ws, F)
+
+function _selinv_lu!(dest::SparseMatrixCSC, ws::LUSelInvWorkspace, F::Factorization)
     size(F) == size(ws) || throw(
         DimensionMismatch("factorization has size $(size(F)), workspace has size $(size(ws))"),
     )
@@ -184,19 +198,23 @@ end
 
 """
     selinv_diag(F::SparseArrays.UMFPACK.UmfpackLU; depermute=true) -> Vector
+    selinv_diag(F::KLU.KLUFactorization; depermute=true) -> Vector
 
-Compute the diagonal of `inv(A)` from a sparse LU factorization `F = lu(A)`.
-Entry `i` of the result is `inv(A)[i, i]` in the original numbering of `A`;
-`depermute=false` is not supported because the row and column permutations of a
-pivoted LU factorization differ.
+Compute the diagonal of `inv(A)` from a sparse LU factorization `F` of `A`
+(`lu(A)`, or `klu(A)` after `using KLU`). Entry `i` of the result is
+`inv(A)[i, i]` in the original numbering of `A`; `depermute=false` is not
+supported because the row and column permutations of a pivoted LU factorization
+differ.
 """
-function selinv_diag(F::_UmfpackLU; depermute = true)
+selinv_diag(F::_UmfpackLU; depermute = true) = _selinv_lu_diag(F, depermute)
+
+function _selinv_lu_diag(F::Factorization, depermute::Bool)
     depermute || throw(
         ArgumentError("LU selected inverses are only available in the original numbering (depermute=true)"),
     )
     n = _check_lu_factorization(F)
     D = SparseMatrixCSC(n, n, collect(1:(n + 1)), collect(1:n), ones(Bool, n))
-    return nonzeros(selinv(F, D))
+    return nonzeros(_selinv_lu(F, D))
 end
 
 function _check_dest_pattern(dest::SparseMatrixCSC, ws::LUSelInvWorkspace)

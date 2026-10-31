@@ -9,14 +9,17 @@ PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [weakdeps]
+KLU = "ef3ab10e-7fda-4108-b977-705223b18434"
 LDLFactorizations = "40e66cde-538c-5869-a4ad-c39174c6795b"
 
 [extensions]
+SelectedInversionKLUExt = ["KLU"]
 SelectedInversionLDLFactorizations = ["LDLFactorizations"]
 
 [compat]
 Aqua = "0.8"
 JLD = "0.13"
+KLU = "0.6"
 LDLFactorizations = "0.10"
 LinearAlgebra = "<0.0.1, 1"
 MatrixMarket = "0.5"
@@ -30,6 +33,7 @@ julia = "1.10"
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 JLD = "4138dd39-2aa7-5051-a626-17a0bb65d9c8"
+KLU = "ef3ab10e-7fda-4108-b977-705223b18434"
 LDLFactorizations = "40e66cde-538c-5869-a4ad-c39174c6795b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MatrixMarket = "4d4711f2-db25-561a-b6b3-d35e7d4047d3"
@@ -39,4 +43,4 @@ SuiteSparseMatrixCollection = "ac199af8-68bc-55b8-82c4-7abd6f96ed98"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Aqua", "Test", "JLD", "LDLFactorizations", "LinearAlgebra", "Random", "SparseArrays", "MatrixMarket", "SuiteSparseMatrixCollection"]
+test = ["Aqua", "Test", "JLD", "KLU", "LDLFactorizations", "LinearAlgebra", "Random", "SparseArrays", "MatrixMarket", "SuiteSparseMatrixCollection"]

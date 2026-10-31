@@ -33,8 +33,8 @@ SelectedInversion.jl directly interfaces with CHOLMOD-based Cholesky
 factorizations, which are the default for sparse symmetric positive-definite
 matrices in Julia.
 It also supports factorizations obtained from LDLFactorizations.jl through a
-package extension, and UMFPACK-based sparse LU factorizations for
-unsymmetric, indefinite and complex matrices.
+package extension, and sparse LU factorizations (UMFPACK, or KLU through a
+package extension) for unsymmetric, indefinite and complex matrices.
 
 The algorithms implemented here are directly based on SelInv [1].
 The simplicial formulation is equivalent to the Takahashi recursions [2, 3].
@@ -113,8 +113,9 @@ d_permuted = selinv_diag(A; depermute=false)  # diagonal of permuted inverse
 ### Unsymmetric, Indefinite and Complex Matrices (Sparse LU)
 
 Cholesky-based selected inversion needs a symmetric positive-definite matrix.
-For any square nonsingular sparse matrix, use Julia's UMFPACK LU
-factorization and say which entries of the inverse you need:
+For any square nonsingular sparse matrix, use a sparse LU factorization
+(Julia's UMFPACK `lu`, or KLU's `klu`) and say which entries of the inverse you
+need:
 
 ```julia
 F = lu(A)                    # UMFPACK, with row scaling and pivoting
@@ -139,6 +140,21 @@ Z = float(copy(B))
 lu!(F, A_new)
 selinv!(Z, ws, F)            # prepared again only if UMFPACK changed its pivots
 ```
+
+KLU factorizations from [KLU.jl](https://github.com/JuliaSparse/KLU.jl) work the
+same way through a package extension, including KLU's block triangular form:
+
+```julia
+using KLU
+F = klu(A)
+Z = selinv(F, B)
+klu!(F, A_new)
+selinv!(Z, ws, F)            # ws = LUSelInvWorkspace(F, B)
+```
+
+KLU's refactorization can be much faster than UMFPACK's on systems with a few
+dense rows and columns (such as a saddle-point system with a coupling row),
+whereas reading UMFPACK's factors for `selinv!` allocates less.
 
 The algorithm is the scalar LU selected inversion of Jacquelin, Lin and Yang
 [4]. Only the entries of the inverse that the requested ones depend on are

@@ -173,7 +173,7 @@ end
         A = sparse([1.0e-14 2.0e-14 0; 1 3 1; 0 1 4.0])
         F = lu(A)
         factors = SelectedInversion._read_factors!(
-            SelectedInversion._UmfpackFactors{Float64, Int}(), F,
+            SelectedInversion._LUFactors{Float64, Int}(), F,
         )
         @test iszero(factors.do_recip[])
         r = SelectedInversion._row_multipliers!(Float64[], factors)

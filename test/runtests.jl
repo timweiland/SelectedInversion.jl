@@ -10,6 +10,7 @@ include("test_dot.jl")
 include("test_extract.jl")
 include("test_simplicial.jl")
 include("test_lu.jl")
+include("test_klu.jl")
 
 @testset "SelectedInversion.jl" begin
     @testset "Code quality (Aqua.jl)" begin
