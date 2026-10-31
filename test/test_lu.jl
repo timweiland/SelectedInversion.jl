@@ -168,10 +168,16 @@ end
 
     @testset "Row scaling by division (tiny row sums)" begin
         # UMFPACK divides by the scale factors instead of multiplying when a row
-        # sum is tiny; SparseArrays' F.Rs does not say which it did.
+        # sum is tiny. SparseArrays' F.Rs ignored this before
+        # JuliaSparse/SparseArrays.jl#899, so the factors are read directly.
         A = sparse([1.0e-14 2.0e-14 0; 1 3 1; 0 1 4.0])
         F = lu(A)
-        @test !(F.L * F.U ≈ (F.Rs .* A)[F.p, F.q])
+        factors = SelectedInversion._read_factors!(
+            SelectedInversion._UmfpackFactors{Float64, Int}(), F,
+        )
+        @test iszero(factors.do_recip[])
+        r = SelectedInversion._row_multipliers!(Float64[], factors)
+        @test Matrix(F.L * F.U) ≈ (r .* Matrix(A))[F.p, F.q]
         @test lu_dense_check(A, sparse(ones(Bool, 3, 3))) < 1.0e-12
         @test selinv_diag(F) ≈ diag(inv(Matrix(A)))
     end

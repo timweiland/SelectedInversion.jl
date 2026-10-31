@@ -25,7 +25,7 @@ function augmented(D, B, W)
     r = size(B, 1)
     E = spdiagm(0 => ones(r))
     C = B / sqrt(2)
-    return [D C' C'; C E+W/2 -W/2; C -W/2 -E+W/2]
+    return [D C' C'; C E + W / 2 -W / 2; C -W / 2 -E + W / 2]
 end
 
 function arrow(n)
