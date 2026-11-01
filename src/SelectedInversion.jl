@@ -5,6 +5,9 @@ include("selinv_supernodal.jl")
 include("selinv_simplicial.jl")
 include("selinv.jl")
 include("selinv_ldlt.jl")
+include("lu_factors.jl")
+include("umfpack_factors.jl")
+include("selinv_lu.jl")
 
 using PrecompileTools
 
@@ -46,6 +49,11 @@ using PrecompileTools
         F_simpl = cholesky(A_simpl; perm = 1:size(A_simpl, 1))
         selinv(F_simpl)
         selinv(F_simpl; depermute = true)
+
+        # Pivoted sparse LU path
+        F_lu = lu(A_simpl)
+        selinv(F_lu, A_simpl)
+        selinv_diag(F_lu)
     end
 end
 
